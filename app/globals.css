@@ -11,7 +11,9 @@
   --line: rgba(35, 40, 31, 0.16);
   --ff-display: var(--font-display), serif;
   --ff-body: var(--font-body), sans-serif;
-  --ff-mono: var(--font-mono), monospace;
+  /* Mono labels (eyebrow, tags, stat captions, footer fine print) now
+     reuse the body typeface — IBM Plex Mono was dropped. */
+  --ff-mono: var(--font-body), sans-serif;
 }
 
 * {

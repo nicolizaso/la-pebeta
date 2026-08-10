@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, Schibsted_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { Instrument_Serif, Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
 
 const instrumentSerif = Instrument_Serif({
@@ -17,13 +17,6 @@ const schibstedGrotesk = Schibsted_Grotesk({
   display: "swap",
 });
 
-const ibmPlexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-mono",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
   title: "La Pebeta — De la tierra a la mesa",
   description:
@@ -38,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={`${instrumentSerif.variable} ${schibstedGrotesk.variable} ${ibmPlexMono.variable}`}
+        className={`${instrumentSerif.variable} ${schibstedGrotesk.variable}`}
       >
         {children}
       </body>
