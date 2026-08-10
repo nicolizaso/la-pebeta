@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Point Tailwind's own font tokens at the project typefaces so the
+   default system stack (-apple-system, BlinkMacSystemFont, ...) never
+   ends up as the applied/fallback font anywhere, including <html>. */
+@theme {
+  --font-sans: var(--font-body), sans-serif;
+  --font-serif: var(--font-display), serif;
+}
+
 :root {
   --paper: #f1ebdd;
   --paper-light: #faf7ef;
