@@ -65,11 +65,20 @@ export function SiteAnimations() {
         });
       });
 
-      // stagger the process stages together
-      gsap
-        .timeline({ scrollTrigger: { trigger: "#processTrack", start: "top 80%" } })
-        .to("#processTrack .stage.reveal", { opacity: 1, y: 0, duration: 0.7, ease: "power3.out", stagger: 0.15 })
-        .to("#processLine", { width: "100%", duration: 1.1, ease: "power2.inOut" }, "-=0.5");
+      // stagger the process stages together (works for any .process-track on the page,
+      // not just the homepage one — lets other pages reuse the same layout)
+      gsap.utils.toArray<HTMLElement>(".process-track").forEach((track) => {
+        const line = track.querySelector(".process-line");
+        const tl = gsap.timeline({ scrollTrigger: { trigger: track, start: "top 80%" } });
+        tl.to(track.querySelectorAll(".stage.reveal"), {
+          opacity: 1,
+          y: 0,
+          duration: 0.7,
+          ease: "power3.out",
+          stagger: 0.15,
+        });
+        if (line) tl.to(line, { width: "100%", duration: 1.1, ease: "power2.inOut" }, "-=0.5");
+      });
 
       // photo blocks: slight scale-in as they reveal (parallax feel)
       gsap.utils.toArray<HTMLElement>(".photo").forEach((el) => {

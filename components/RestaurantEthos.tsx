@@ -1,17 +1,17 @@
 import { Photo } from "./Photo";
 import { LinkArrow } from "./LinkArrow";
 
-export function RestaurantSection() {
+export function RestaurantEthos() {
   return (
-    <section className="feature" id="restaurant">
+    <section className="feature" id="km0">
       <div className="wrap">
-        <Photo className="media reveal" tag="Restaurant — jue a dom, 12 a 16 hs" />
+        <Photo className="media reveal" tag="Cocina — de nariz a cola" />
         <div className="copy">
-          <div className="eyebrow reveal">01 — Restaurant</div>
-          <h2 className="section-title reveal">La verdadera experiencia de kilómetro cero.</h2>
+          <div className="eyebrow reveal">Km 0</div>
+          <h2 className="section-title reveal">De la tierra al plato, auténticamente.</h2>
           <p className="body reveal">
-            Cultivamos y criamos de manera consciente. La carta se piensa desde la huerta hacia
-            afuera, con numerosos platos gluten free y opciones aptas para veganos, y la voluntad
+            Nuestra carta cambia cada semana: cada producto e ingrediente que llega a la mesa tuvo
+            sentido antes de estar ahí. Cultivamos y criamos de manera consciente, con la voluntad
             de no producir residuo orgánico.
           </p>
           <div className="stat-row reveal">
@@ -28,7 +28,7 @@ export function RestaurantSection() {
               <div className="l">Años de proyecto</div>
             </div>
           </div>
-          <LinkArrow href="/restaurant">Ver la carta</LinkArrow>
+          <LinkArrow href="/#visita">Reservar mesa</LinkArrow>
         </div>
       </div>
     </section>

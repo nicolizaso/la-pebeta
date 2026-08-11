@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 const NAV_LINKS = [
-  { href: "#restaurant", label: "Restaurant" },
-  { href: "#granja", label: "Granja" },
-  { href: "#proveeduria", label: "Proveeduría" },
-  { href: "#visita", label: "Visita" },
+  { href: "/restaurant", label: "Restaurant" },
+  { href: "/#granja", label: "Granja" },
+  { href: "/#proveeduria", label: "Proveeduría" },
+  { href: "/#visita", label: "Visita" },
 ];
 
 export function Header() {
@@ -24,18 +25,18 @@ export function Header() {
 
   return (
     <header className={`site${scrolled ? " scrolled" : ""}`}>
-      <a href="#" className="logo" onClick={close}>
+      <Link href="/" className="logo" onClick={close}>
         La Pebeta
-      </a>
+      </Link>
       <nav className={`links${open ? " open" : ""}`}>
         {NAV_LINKS.map((link) => (
-          <a key={link.href} href={link.href} onClick={close}>
+          <Link key={link.href} href={link.href} onClick={close}>
             {link.label}
-          </a>
+          </Link>
         ))}
-        <a href="#visita" className="cta" onClick={close}>
+        <Link href="/#visita" className="cta" onClick={close}>
           Reservar
-        </a>
+        </Link>
       </nav>
       <button
         className="nav-toggle"
