@@ -3,7 +3,15 @@ import { Photo } from "./Photo";
 export function RestaurantHero() {
   return (
     <section className="hero">
-      <Photo variant="clay" tag="Jue a dom, 12 a 16 hs — Los Cardales" />
+      <Photo
+        photo="restaurant/9"
+        alt="Puertas abiertas del restaurant entre la vegetación del parque"
+        tag="Jue a dom, 12 a 16 hs — Los Cardales"
+        sizes="100vw"
+        priority
+        scrim
+        position="center 48%"
+      />
       <div className="hero-inner">
         <div className="stamp">
           <span className="dot"></span> Restaurant · Km 0

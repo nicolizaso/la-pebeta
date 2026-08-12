@@ -1,3 +1,5 @@
+import { Photo } from "./Photo";
+
 const QUOTES = [
   {
     text: "Achicar la distancia entre la tierra y la mesa es el foco de nuestros esfuerzos.",
@@ -16,9 +18,16 @@ const QUOTES = [
 export function Valores() {
   return (
     <section className="valores">
+      <Photo
+        photo="granja/3"
+        alt="Galpón y canteros de la granja bajo el cielo abierto"
+        className="valores-bg"
+        sizes="100vw"
+        parallax
+      />
       <div className="wrap">
         <div className="eyebrow reveal">Nuestros valores</div>
-        <h2 className="section-title reveal" style={{ maxWidth: "16ch" }}>
+        <h2 className="section-title reveal" style={{ maxWidth: "16ch" }} data-split>
           Cada día, un paso más allá.
         </h2>
         <div className="quote-grid">

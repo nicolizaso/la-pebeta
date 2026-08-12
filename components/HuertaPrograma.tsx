@@ -14,7 +14,9 @@ export function HuertaPrograma() {
       <div className="wrap">
         <div className="copy">
           <div className="eyebrow reveal">Visita a la huerta</div>
-          <h2 className="section-title reveal">Antes de comer, caminá la huerta.</h2>
+          <h2 className="section-title reveal" data-split>
+            Antes de comer, caminá la huerta.
+          </h2>
           <p className="body reveal">
             Los fines de semana abrimos la producción antes del almuerzo: un recorrido guiado que
             termina en la mesa del restaurant.
@@ -29,7 +31,26 @@ export function HuertaPrograma() {
           </ol>
           <LinkArrow href="/#visita">Reservar visita</LinkArrow>
         </div>
-        <Photo variant="clay" className="media reveal" tag="Huerta — programa de visita" />
+        <div className="media-stack">
+          <Photo
+            photo="huerta/8"
+            alt="Trabajadora de la huerta plantando de rodillas entre los canteros"
+            className="media"
+            tag="Huerta — programa de visita"
+            sizes="(max-width: 860px) 92vw, 46vw"
+            reveal
+            parallax
+            lightbox
+          />
+          <Photo
+            photo="huerta/6"
+            alt="Cartel de madera que dice Plantinera junto al invernáculo"
+            className="media-inset"
+            sizes="(max-width: 860px) 40vw, 20vw"
+            reveal
+            lightbox
+          />
+        </div>
       </div>
     </section>
   );
