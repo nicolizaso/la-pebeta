@@ -1,9 +1,20 @@
+import { Photo } from "./Photo";
+
 export function Intro() {
   return (
     <section className="intro">
       <div className="wrap">
         <div className="kicker">
           <div className="eyebrow">El proyecto</div>
+          <Photo
+            photo="granja/6"
+            alt="Frente de ladrillo de La Pebeta con la leyenda Farm to Table, detrás de las lavandas"
+            tag="Granja · Restaurant · Proveeduría"
+            className="intro-photo"
+            sizes="(max-width: 860px) 92vw, 30vw"
+            reveal
+            parallax
+          />
         </div>
         <p className="lede reveal">
           La Pebeta es el primer Farm to Table de la Argentina: una granja agroecológica donde

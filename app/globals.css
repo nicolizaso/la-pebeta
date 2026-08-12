@@ -61,10 +61,15 @@ a {
   padding: 0 clamp(20px, 5vw, 64px);
 }
 
-/* ---------- utility photo placeholders (duotone, no external dependency) ---------- */
+/* ---------- photos ----------
+   One primitive for every image on the site (see components/Photo.tsx): a
+   duotone ground that shows through while the file loads, a grain pass to keep
+   the paper feel, a bottom gradient so the corner tag stays legible, and an
+   inner .photo-media layer that GSAP is free to scale and drift. */
 .photo {
   position: relative;
   overflow: hidden;
+  margin: 0;
   background: linear-gradient(155deg, var(--moss) 0%, var(--moss-deep) 55%, #1c231a 100%);
   isolation: isolate;
 }
@@ -72,6 +77,8 @@ a {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 1;
+  pointer-events: none;
   background-image: repeating-linear-gradient(
       115deg,
       rgba(255, 255, 255, 0.05) 0px,
@@ -84,15 +91,50 @@ a {
   mix-blend-mode: soft-light;
   opacity: 0.9;
 }
+/* over a real photograph the same texture only needs a whisper */
+.photo.has-img::before {
+  opacity: 0.32;
+}
 .photo::after {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 1;
+  pointer-events: none;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.18), transparent 40%);
+}
+/* darker at the bottom for the headline, and again at the top so the nav bar
+   stays readable over a bright sky */
+.photo.scrim::after {
+  background: linear-gradient(
+    0deg,
+    rgba(14, 18, 12, 0.72) 0%,
+    rgba(14, 18, 12, 0.12) 45%,
+    rgba(14, 18, 12, 0.52) 100%
+  );
 }
 .photo.clay {
   background: linear-gradient(155deg, var(--clay) 0%, #7a3b1e 60%, #4a2413 100%);
 }
+
+.photo-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+}
+/* room for the drift so no edge is ever exposed */
+.photo.has-parallax .photo-media {
+  inset: -8% 0;
+}
+.hero .photo .photo-media {
+  inset: -12% 0;
+}
+.photo-media img {
+  object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
 .photo .tag {
   position: absolute;
   left: 16px;
@@ -106,6 +148,38 @@ a {
   border: 1px solid rgba(250, 247, 239, 0.35);
   padding: 4px 9px;
   backdrop-filter: blur(2px);
+  transition: transform 0.45s ease, background 0.45s ease;
+}
+
+/* click target for the full-screen viewer */
+.photo-open {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.photo:has(.photo-open):hover .photo-media img,
+.photo:has(.photo-open):focus-within .photo-media img {
+  transform: scale(1.045);
+}
+.photo:has(.photo-open):hover .tag {
+  transform: translateY(-3px);
+  background: rgba(20, 24, 16, 0.6);
+}
+
+/* ---------- headings revealed word by word (built by SiteAnimations) ---------- */
+.split-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.06em;
+}
+.split-word > span {
+  display: inline-block;
+  transform: translateY(110%);
 }
 
 /* ---------- nav ---------- */
@@ -124,11 +198,36 @@ header.site {
   border-bottom: 1px solid transparent;
 }
 header.site.scrolled {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+/* The frosted panel lives on a pseudo-element on purpose: a backdrop-filter on
+   the header itself would turn it into the containing block for the fixed
+   mobile nav, leaving the menu anchored to the bar instead of the viewport. */
+header.site.scrolled::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   background: rgba(241, 235, 221, 0.86);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
-  padding-top: 14px;
-  padding-bottom: 14px;
+}
+
+/* Over the hero photo the bar goes light, and back to ink once it has a
+   background behind it. */
+header.site:not(.scrolled) .logo,
+header.site:not(.scrolled) nav.links a {
+  color: var(--paper-light);
+}
+header.site:not(.scrolled) nav.links a.cta {
+  border-color: rgba(250, 247, 239, 0.6);
+}
+header.site:not(.scrolled) .nav-toggle span {
+  background: var(--paper-light);
+}
+header.site:not(.scrolled) nav.links.open a {
+  color: var(--ink);
 }
 .logo {
   font-family: var(--ff-display);
@@ -140,7 +239,7 @@ header.site.scrolled {
 nav.links {
   display: flex;
   align-items: center;
-  gap: 34px;
+  gap: clamp(16px, 2vw, 30px);
 }
 nav.links a {
   text-decoration: none;
@@ -347,6 +446,11 @@ h2.section-title {
   line-height: 1.32;
   margin: 0;
 }
+.intro-photo {
+  aspect-ratio: 2 / 3;
+  max-width: 330px;
+  margin-top: 30px;
+}
 .intro p.lede::first-letter {
   font-size: 3.1em;
   float: left;
@@ -407,6 +511,10 @@ h2.section-title {
   font-family: var(--ff-mono);
   font-size: 12px;
 }
+.stage-photo {
+  aspect-ratio: 4 / 5;
+  margin-bottom: 18px;
+}
 .stage h3 {
   font-family: var(--ff-display);
   font-weight: 400;
@@ -442,6 +550,24 @@ h2.section-title {
 }
 .feature .media.wide {
   aspect-ratio: 16 / 11;
+}
+
+/* main photo with a smaller one overlapping its corner */
+.media-stack {
+  position: relative;
+}
+.media-inset {
+  position: absolute;
+  right: -7%;
+  bottom: -8%;
+  width: 40%;
+  aspect-ratio: 3 / 4;
+  border: 7px solid var(--paper);
+  box-shadow: 0 22px 44px rgba(35, 40, 31, 0.22);
+}
+.feature.reverse .media-inset {
+  right: auto;
+  left: -7%;
 }
 .feature .copy p.body {
   font-size: 16.5px;
@@ -528,19 +654,208 @@ h2.section-title {
   grid-template-columns: 1.3fr 1fr;
   gap: 16px;
 }
-.granja-gallery .photo:first-child {
-  grid-row: span 2;
-  aspect-ratio: 3 / 4;
-}
 .granja-gallery .photo {
   aspect-ratio: 16 / 10;
+}
+/* the tall one takes its height from the pair beside it */
+.granja-gallery .photo:first-child {
+  grid-row: span 2;
+  aspect-ratio: auto;
+  height: 100%;
+}
+
+/* proveeduría: one tall shot plus two stacked details */
+.prov-gallery {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 14px;
+}
+.prov-main {
+  grid-row: span 2;
+  height: 100%;
+}
+.prov-side {
+  aspect-ratio: 1 / 1;
+}
+
+/* ---------- photo marquee ---------- */
+.strip {
+  padding: 0 0 clamp(50px, 7vw, 90px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+.marquee-viewport {
+  overflow: hidden;
+}
+.marquee {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+.marquee-group {
+  display: flex;
+  flex: none;
+}
+/* the gap lives on the items so the two groups tile at exactly -50% */
+.marquee-item {
+  height: clamp(170px, 21vw, 290px);
+  margin-right: 14px;
+  flex: none;
+}
+.marquee-item .tag {
+  left: 10px;
+  bottom: 10px;
+}
+
+/* ---------- huerta filmstrip ---------- */
+.hscroll {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--paper-light);
+}
+.hscroll-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(30px, 5vw, 64px);
+  padding: clamp(70px, 9vw, 110px) 0 clamp(50px, 6vw, 70px);
+}
+.hscroll-head {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(24px, 4vw, 70px);
+  align-items: end;
+}
+.hscroll-head .section-title {
+  margin-bottom: 0;
+}
+.hscroll-note p {
+  margin: 0 0 20px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(35, 40, 31, 0.75);
+  max-width: 42ch;
+}
+.hscroll-viewport {
+  overflow: hidden;
+  padding-left: clamp(20px, 5vw, 64px);
+}
+.hscroll-track {
+  display: flex;
+  gap: 18px;
+  width: max-content;
+  will-change: transform;
+}
+.hscroll-item {
+  height: clamp(280px, 46vh, 460px);
+  flex: none;
+}
+
+/* ---------- full-bleed band (paseos) ---------- */
+.band {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: clamp(90px, 12vw, 160px) 0;
+  color: var(--paper-light);
+}
+.band-bg {
+  position: absolute;
+  inset: 0;
+}
+.band-inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: clamp(30px, 5vw, 80px);
+  align-items: center;
+}
+.band .eyebrow {
+  color: var(--wheat);
+}
+.band .eyebrow::before {
+  background: var(--wheat);
+}
+.band .body {
+  font-size: 16.5px;
+  line-height: 1.7;
+  color: rgba(250, 247, 239, 0.9);
+  max-width: 44ch;
+  margin: 0 0 28px;
+}
+.band .link-arrow {
+  border-bottom-color: rgba(250, 247, 239, 0.6);
+}
+.band-card {
+  aspect-ratio: 3 / 4;
+  box-shadow: 0 34px 70px rgba(12, 16, 10, 0.45);
+  justify-self: end;
+  width: 100%;
+}
+
+/* ---------- eventos mosaic / platos grid ----------
+   Both use CSS columns so every photo keeps the framing it was shot with
+   instead of being cropped into a uniform cell. */
+.eventos {
+  padding: clamp(90px, 11vw, 150px) 0;
+}
+.eventos-head,
+.hscroll-head {
+  align-items: end;
+}
+.eventos-head {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(24px, 4vw, 70px);
+}
+.eventos-head .section-title {
+  margin-bottom: 0;
+}
+.eventos-note p {
+  margin: 0 0 20px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: rgba(35, 40, 31, 0.75);
+  max-width: 42ch;
+}
+.mosaic,
+.platos-grid {
+  columns: 3;
+  column-gap: 16px;
+  margin-top: clamp(36px, 5vw, 58px);
+}
+.mosaic-item,
+.plato {
+  margin: 0 0 16px;
+  break-inside: avoid;
+}
+
+.platos {
+  padding: clamp(80px, 10vw, 140px) 0;
+  border-top: 1px solid var(--line);
 }
 
 /* ---------- quotes ---------- */
 .valores {
+  position: relative;
+  overflow: hidden;
   padding: clamp(90px, 10vw, 150px) 0;
   background: var(--moss-deep);
   color: var(--paper-light);
+}
+.valores-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.26;
+  filter: grayscale(0.35);
+}
+.valores .wrap {
+  position: relative;
+  z-index: 2;
 }
 .valores .wrap > .eyebrow {
   color: var(--wheat);
@@ -678,6 +993,81 @@ footer .fine {
   margin-top: 34px;
 }
 
+/* ---------- full-screen photo viewer ---------- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(18px, 5vw, 56px);
+  background: rgba(16, 20, 13, 0.94);
+  backdrop-filter: blur(6px);
+  cursor: zoom-out;
+}
+.lightbox-frame {
+  position: relative;
+  cursor: auto;
+  max-width: min(1100px, 92vw);
+}
+.lightbox-img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 78vh;
+  object-fit: contain;
+}
+.lightbox-caption {
+  margin: 16px 0 0;
+  font-family: var(--ff-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(250, 247, 239, 0.7);
+}
+.lightbox-close {
+  position: fixed;
+  top: clamp(14px, 3vw, 28px);
+  right: clamp(14px, 3vw, 28px);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-content: center;
+  background: transparent;
+  border: 1px solid rgba(250, 247, 239, 0.35);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.lightbox-close:hover {
+  background: rgba(250, 247, 239, 0.12);
+}
+.lightbox-close span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 17px;
+  height: 1px;
+  background: var(--paper-light);
+}
+.lightbox-close span:first-child {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.lightbox-close span:last-child {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* ---------- desktop-only pinned filmstrip ---------- */
+@media (min-width: 861px) {
+  .hscroll {
+    height: 100vh;
+  }
+  .hscroll-stage {
+    height: 100vh;
+    box-sizing: border-box;
+  }
+}
+
 /* ---------- responsive ---------- */
 @media (max-width: 860px) {
   nav.links {
@@ -739,11 +1129,13 @@ footer .fine {
     direction: ltr;
   }
   .granja-gallery {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
   .granja-gallery .photo:first-child {
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 3 / 4;
     grid-row: auto;
+    grid-column: span 2;
+    height: auto;
   }
   .quote-grid {
     grid-template-columns: 1fr;
@@ -755,6 +1147,101 @@ footer .fine {
   .stat-row {
     gap: 26px;
   }
+
+  /* --- photo layouts --- */
+  .intro-photo {
+    max-width: 260px;
+  }
+  .stage-photo {
+    aspect-ratio: 1 / 1;
+  }
+  .media-inset {
+    width: 44%;
+    right: -4%;
+    bottom: -6%;
+    border-width: 5px;
+  }
+  .feature.reverse .media-inset {
+    left: -4%;
+  }
+  .prov-gallery {
+    grid-template-columns: 1fr 1fr;
+  }
+  .prov-main {
+    grid-row: auto;
+    grid-column: span 2;
+    aspect-ratio: 4 / 5;
+    height: auto;
+  }
+  .band-inner {
+    grid-template-columns: 1fr;
+  }
+  .band-card {
+    max-width: 340px;
+    justify-self: start;
+  }
+  .eventos-head,
+  .hscroll-head {
+    grid-template-columns: 1fr;
+  }
+  .mosaic,
+  .platos-grid {
+    columns: 2;
+  }
+
+  /* the filmstrip becomes a plain swipeable row */
+  .hscroll-stage {
+    padding: clamp(60px, 12vw, 90px) 0;
+  }
+  .hscroll-viewport {
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding-right: clamp(20px, 5vw, 64px);
+    -webkit-overflow-scrolling: touch;
+  }
+  .hscroll-item {
+    height: 46vh;
+    scroll-snap-align: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .mosaic,
+  .platos-grid {
+    columns: 1;
+  }
+  .granja-gallery {
+    grid-template-columns: 1fr;
+  }
+  .granja-gallery .photo:first-child {
+    grid-column: auto;
+  }
+  .prov-gallery {
+    grid-template-columns: 1fr;
+  }
+  .prov-main {
+    grid-column: auto;
+  }
+  .prov-side {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* Visitors who asked for less motion get the same layouts, held still: the
+   marquee and the filmstrip become ordinary scrollable rows. */
+.reduce-motion .marquee-viewport,
+.reduce-motion .hscroll-viewport {
+  overflow-x: auto;
+}
+.reduce-motion .marquee-group[aria-hidden="true"] {
+  display: none;
+}
+.reduce-motion .hscroll,
+.reduce-motion .hscroll-stage {
+  height: auto;
+}
+.reduce-motion .photo-media img {
+  transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

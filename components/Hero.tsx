@@ -3,7 +3,15 @@ import { Photo } from "./Photo";
 export function Hero() {
   return (
     <section className="hero">
-      <Photo variant="clay" tag="04·29 — CAMPO NORTE, LOS CARDALES" />
+      <Photo
+        photo="granja/7"
+        alt="Canteros de la huerta bajo el riego, con un arcoíris entre los aspersores"
+        tag="04·29 — CAMPO NORTE, LOS CARDALES"
+        sizes="100vw"
+        priority
+        scrim
+        position="center 60%"
+      />
       <div className="hero-inner">
         <div className="stamp">
           <span className="dot"></span> Km 0 · Los Cardales, Bs. As.

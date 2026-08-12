@@ -4,10 +4,12 @@ import { RestaurantHero } from "@/components/RestaurantHero";
 import { RestaurantIntro } from "@/components/RestaurantIntro";
 import { RestaurantEthos } from "@/components/RestaurantEthos";
 import { CartaFeatures } from "@/components/CartaFeatures";
+import { CartaGaleria } from "@/components/CartaGaleria";
 import { HuertaPrograma } from "@/components/HuertaPrograma";
 import { Visita } from "@/components/Visita";
 import { Footer } from "@/components/Footer";
 import { SiteAnimations } from "@/components/SiteAnimations";
+import { Lightbox } from "@/components/Lightbox";
 
 export const metadata: Metadata = {
   title: "Restaurant — La Pebeta",
@@ -25,10 +27,12 @@ export default function RestaurantPage() {
         <RestaurantIntro />
         <RestaurantEthos />
         <CartaFeatures />
+        <CartaGaleria />
         <HuertaPrograma />
         <Visita />
       </main>
       <Footer />
+      <Lightbox />
     </>
   );
 }
