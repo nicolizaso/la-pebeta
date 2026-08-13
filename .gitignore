@@ -27,9 +27,6 @@ yarn-error.log*
 # claude code local session state
 .claude/
 
-# temporales de la escritura atómica de data/db.json
-data/*.tmp
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -1,21 +1,21 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { supabase } from "./supabase";
 
 /**
- * La "base de datos" del sitio mientras esto es una versión de prueba: un solo
- * JSON en `data/db.json` con las colecciones que maneja el ABM de admin
- * (reservas, productos de la proveeduría y compras).
+ * La capa de datos del sitio: acá viven los tipos y las únicas funciones que
+ * hablan con la base. Todo lo demás (la API, el formulario, el ABM que viene)
+ * pasa por este archivo, así que mover los datos de lugar es reescribir esto y
+ * nada más.
  *
- * Todo pasa por acá, así que el día que esto se mude a una base de verdad hay
- * un único archivo que reescribir. Ojo con dos cosas mientras tanto:
- *
- *   - Escribe en el filesystem, así que necesita un server con disco propio.
- *     En un deploy serverless (Vercel) el archivo es de sólo lectura y, si no
- *     lo fuera, cada instancia tendría su copia.
- *   - No hay auth: cualquier lectura de las colecciones desde el navegador
- *     expondría datos de contacto. Por eso la API pública sólo escribe.
+ * Hoy son tres tablas en Postgres (Supabase), con prefijo `pebeta_` porque
+ * comparten proyecto con otra app. Cuando La Pebeta tenga su propio proyecto,
+ * cambia el prefijo y la conexión; los tipos y las firmas quedan igual.
  */
+
+export const TABLAS = {
+  reservas: "pebeta_reservas",
+  productos: "pebeta_productos",
+  compras: "pebeta_compras",
+} as const;
 
 export type ReservaTipo = "paseos" | "restaurant";
 export type ReservaEstado = "pendiente" | "confirmada" | "cancelada";
@@ -70,75 +70,17 @@ export type Compra = {
   total: number;
 };
 
-export type DB = {
-  meta: { version: number; descripcion: string; actualizado: string };
-  reservas: Reserva[];
-  productos: Producto[];
-  compras: Compra[];
+/** Los datos que llegan del formulario, ya validados. */
+export type NuevaReserva = {
+  tipo: ReservaTipo;
+  nombre: string;
+  telefono: string;
+  email: string;
+  fecha: string;
+  hora: string;
+  personas: number;
+  comentarios: string;
 };
-
-const RUTA = path.join(process.cwd(), "data", "db.json");
-
-const VACIA: DB = {
-  meta: {
-    version: 1,
-    descripcion:
-      "Base de datos de prueba de La Pebeta: reservas, productos de la proveeduría y compras. Es el archivo al que apunta el ABM de admin.",
-    actualizado: new Date(0).toISOString(),
-  },
-  reservas: [],
-  productos: [],
-  compras: [],
-};
-
-/** Las escrituras se encadenan: dos reservas simultáneas no se pisan. */
-let cola: Promise<unknown> = Promise.resolve();
-
-function enCola<T>(tarea: () => Promise<T>): Promise<T> {
-  const proxima = cola.then(tarea, tarea);
-  cola = proxima.catch(() => {});
-  return proxima;
-}
-
-export async function leerDB(): Promise<DB> {
-  try {
-    const crudo = await readFile(RUTA, "utf8");
-    const datos = JSON.parse(crudo) as Partial<DB>;
-    // una colección que falte no debería tumbar el resto del archivo
-    return {
-      meta: { ...VACIA.meta, ...datos.meta },
-      reservas: datos.reservas ?? [],
-      productos: datos.productos ?? [],
-      compras: datos.compras ?? [],
-    };
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { ...VACIA };
-    throw error;
-  }
-}
-
-/** Escribe a un temporal y renombra, para no dejar el JSON a medio escribir. */
-async function guardarDB(db: DB) {
-  db.meta.actualizado = new Date().toISOString();
-  await mkdir(path.dirname(RUTA), { recursive: true });
-  const temporal = `${RUTA}.${process.pid}.tmp`;
-  await writeFile(temporal, `${JSON.stringify(db, null, 2)}\n`, "utf8");
-  await rename(temporal, RUTA);
-}
-
-/**
- * Lee, deja que `cambio` toque las colecciones y vuelve a escribir, todo dentro
- * del mismo turno de la cola. Lo que devuelva `cambio` es lo que devuelve la
- * operación.
- */
-export function actualizarDB<T>(cambio: (db: DB) => T | Promise<T>): Promise<T> {
-  return enCola(async () => {
-    const db = await leerDB();
-    const resultado = await cambio(db);
-    await guardarDB(db);
-    return resultado;
-  });
-}
 
 /** Código corto y legible para dictar por teléfono: PB-4F2K9A. */
 export function nuevoCodigo(prefijo = "PB"): string {
@@ -150,6 +92,37 @@ export function nuevoCodigo(prefijo = "PB"): string {
   return `${prefijo}-${cuerpo}`;
 }
 
-export function nuevoId(): string {
-  return randomUUID();
+/**
+ * Agrega la reserva y devuelve el objeto tal como quedó guardado.
+ *
+ * La fila se arma entera acá y el insert no pide RETURNING a propósito: con
+ * RLS, leer la fila recién insertada exige una policy de SELECT, y las
+ * reservas no tienen ninguna —nadie puede listar teléfonos ni mails desde
+ * afuera—. Los defaults de la tabla quedan igual, como red de contención.
+ */
+export async function crearReserva(datos: NuevaReserva): Promise<Reserva> {
+  const reserva: Reserva = {
+    id: crypto.randomUUID(),
+    codigo: nuevoCodigo(),
+    estado: "pendiente",
+    creada: new Date().toISOString(),
+    ...datos,
+  };
+
+  const { error } = await supabase().from(TABLAS.reservas).insert(reserva);
+  if (error) throw new Error(`No se pudo guardar la reserva: ${error.message}`);
+
+  return reserva;
+}
+
+/** El catálogo publicado de la proveeduría. */
+export async function listarProductos(): Promise<Producto[]> {
+  const { data, error } = await supabase()
+    .from(TABLAS.productos)
+    .select()
+    .eq("activo", true)
+    .order("categoria", { ascending: true });
+
+  if (error) throw new Error(`No se pudo leer el catálogo: ${error.message}`);
+  return (data ?? []) as Producto[];
 }

@@ -22,46 +22,54 @@ Abrí [http://localhost:3000](http://localhost:3000).
 
 - `app/` — layout, páginas (home, `/restaurant` y `/reservas`), la API (`app/api/`) y estilos globales.
 - `components/` — una pieza por sección, más `Photo` (la primitiva de imagen), `Lightbox` (visor a pantalla completa) y `SiteAnimations`, que centraliza Lenis + GSAP ScrollTrigger.
-- `lib/` — `photos.ts` y el manifiesto generado de imágenes, `db.ts` (la base de
-  datos JSON), `reservas.ts` (las reglas de una reserva), `contacto.ts` y
-  `smooth-scroll.ts` (el puente para mover la página a través de Lenis).
-- `data/` — `db.json`, la base de datos de prueba.
+- `lib/` — `photos.ts` y el manifiesto generado de imágenes, `db.ts` (los tipos
+  y el acceso a la base), `supabase.ts` (la conexión), `reservas.ts` (las reglas
+  de una reserva), `contacto.ts` y `smooth-scroll.ts` (el puente para mover la
+  página a través de Lenis).
 - `assets/imgs/` — originales de cámara, ordenados por área. No se sirven: son el archivo del que sale `public/imgs/`.
 - `public/imgs/` — versiones web (WebP redimensionado) generadas por el script.
 - `reference/` — prototipo HTML original usado como base del diseño.
 
 ## Datos
 
-Mientras esto es una versión de prueba, todo vive en un solo archivo,
-`data/db.json`, con tres colecciones:
+Los datos viven en Postgres, en Supabase. Son tres tablas:
 
-| Colección | Qué guarda |
+| Tabla | Qué guarda |
 | --- | --- |
-| `reservas` | Pedidos de paseo y de mesa, con `estado` (`pendiente` / `confirmada` / `cancelada`) y un `codigo` corto para dictar por teléfono. |
-| `productos` | El catálogo de la proveeduría. |
-| `compras` | Las compras de la tienda, con sus ítems y el total. |
+| `pebeta_reservas` | Pedidos de paseo y de mesa, con `estado` (`pendiente` / `confirmada` / `cancelada`) y un `codigo` corto para dictar por teléfono. |
+| `pebeta_productos` | El catálogo de la proveeduría. |
+| `pebeta_compras` | Las compras de la tienda, con sus ítems y el total. |
 
-`lib/db.ts` es el único que toca el archivo: expone los tipos, `leerDB()` y
-`actualizarDB()`, que lee, deja modificar las colecciones y vuelve a escribir.
-Las escrituras se encadenan en una cola y se guardan a un temporal que después
-se renombra, así dos reservas simultáneas no se pisan ni dejan el JSON a medio
-escribir. Es también el archivo al que apunta el ABM de admin, y el único que
-hay que reescribir el día que esto pase a una base de verdad.
+Van con prefijo porque, por ahora, comparten proyecto de Supabase con otra app.
+Cuando La Pebeta tenga el suyo, se cambian el prefijo y las dos variables de
+entorno y no hay nada más que tocar: `lib/db.ts` es el único módulo que habla
+con la base, y de ahí salen los tipos y las funciones que usan la API, el
+formulario y el ABM que viene.
 
-Dos límites de esta versión, a tener presentes:
+### Configuración
 
-- **Necesita disco propio.** En un deploy serverless (Vercel) el filesystem es
-  de sólo lectura, y aunque no lo fuera cada instancia tendría su copia.
-- **No hay auth.** Por eso `POST /api/reservas` sólo escribe: no existe un GET
-  público de las colecciones, que expondría teléfonos y mails. El listado sale
-  por el ABM cuando tenga login.
+```bash
+SUPABASE_URL=https://<proyecto>.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_…
+```
+
+En local van en `.env.local`; en Vercel, en las environment variables del
+proyecto. La publishable key es pública a propósito: lo que se puede hacer con
+ella lo decide RLS, y hoy es sólo dejar una reserva —que entra siempre como
+`pendiente`— y leer el catálogo publicado. Listar reservas, confirmarlas o
+cancelarlas necesita la secret key, que entra con el ABM y su login.
+
+Las reglas del negocio están dos veces a propósito: en `lib/reservas.ts`, que
+es lo que valida la API, y como constraints de la tabla (jueves a domingo,
+hasta 15 personas por paseo y 10 por mesa), para que no entre nada raro ni
+siquiera escribiendo contra la base de forma directa.
 
 ### Reservas
 
-`POST /api/reservas` valida contra las reglas de `lib/reservas.ts` (jueves a
-domingo, horarios de cada tipo, hasta 15 personas por paseo y 10 por mesa) y
-agrega un objeto nuevo a `reservas`. El formulario de `/reservas` es el que lo
-llama, tanto para paseos como para mesas.
+`POST /api/reservas` valida, agrega la fila y devuelve la reserva con su
+código. El formulario de `/reservas` es el que lo llama, tanto para paseos como
+para mesas. No hay GET: el listado tiene teléfonos y mails, así que sale por el
+ABM cuando tenga login.
 
 ## Imágenes
 

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { actualizarDB, nuevoCodigo, nuevoId, type Reserva } from "@/lib/db";
+import { crearReserva } from "@/lib/db";
 import { validarReserva } from "@/lib/reservas";
 
 /**
- * Alta de reservas: cada POST agrega un objeto a `reservas` en data/db.json.
+ * Alta de reservas: cada POST agrega una fila a `pebeta_reservas`.
  *
  * No hay GET a propósito — el listado tiene teléfonos y mails, así que sale
  * por el ABM de admin cuando tenga auth, no por una ruta pública.
@@ -24,18 +24,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const reserva: Reserva = {
-    id: nuevoId(),
-    codigo: nuevoCodigo(),
-    estado: "pendiente",
-    creada: new Date().toISOString(),
-    ...validacion.datos,
-  };
-
   try {
-    await actualizarDB((db) => {
-      db.reservas.push(reserva);
-    });
+    const reserva = await crearReserva(validacion.datos);
+    return NextResponse.json({ ok: true, reserva }, { status: 201 });
   } catch (error) {
     console.error("No se pudo guardar la reserva", error);
     return NextResponse.json(
@@ -43,6 +34,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-
-  return NextResponse.json({ ok: true, reserva }, { status: 201 });
 }
