@@ -2,10 +2,21 @@
 
 /* Point Tailwind's own font tokens at the project typefaces so the
    default system stack (-apple-system, BlinkMacSystemFont, ...) never
-   ends up as the applied/fallback font anywhere, including <html>. */
+   ends up as the applied/fallback font anywhere, including <html>.
+
+   --font-display / --font-body come from next/font (see app/layout.tsx),
+   whose generated class sits on <html> so these aliases can see them: a
+   var() is substituted on the element that declares it, so an alias in
+   :root only ever reads variables declared on <html> itself. */
 @theme {
-  --font-sans: var(--font-body, sans-serif);
-  --font-serif: var(--font-display, serif);
+  --font-sans: var(
+    --font-body,
+    "Schibsted Grotesk",
+    "Helvetica Neue",
+    Arial,
+    sans-serif
+  );
+  --font-serif: var(--font-display, "Instrument Serif", Georgia, serif);
 }
 
 :root {
@@ -17,9 +28,15 @@
   --clay: #a8552e;
   --wheat: #c9a227;
   --line: rgba(35, 40, 31, 0.16);
-  --ff-display: var(--font-display, serif);
-  --ff-body: var(--font-body, sans-serif);
-  --ff-mono: var(--font-body, sans-serif);
+  --ff-display: var(--font-display, "Instrument Serif", Georgia, serif);
+  --ff-body: var(
+    --font-body,
+    "Schibsted Grotesk",
+    "Helvetica Neue",
+    Arial,
+    sans-serif
+  );
+  --ff-mono: var(--ff-body);
 }
 
 * {

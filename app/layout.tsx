@@ -29,12 +29,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning>
-      <body
-        className={`${instrumentSerif.variable} ${schibstedGrotesk.variable}`}
-      >
-        {children}
-      </body>
+    // The font variables have to live on <html>, not on <body>: globals.css
+    // (and Tailwind's @theme block) alias them from :root, and a var() is
+    // substituted on the element where it is declared. Declared on <body> the
+    // aliases resolve against an <html> that has no --font-* yet, so every
+    // --ff-* would collapse to its bare `serif` / `sans-serif` fallback and
+    // inherit that down the whole tree.
+    <html
+      lang="es"
+      className={`${instrumentSerif.variable} ${schibstedGrotesk.variable}`}
+      suppressHydrationWarning
+    >
+      <body>{children}</body>
     </html>
   );
 }
