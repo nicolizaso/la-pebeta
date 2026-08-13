@@ -28,7 +28,7 @@ export function PaseosBand() {
             espejos de agua. Los recorridos salen a la mañana y terminan en los gallineros, justo
             antes del almuerzo.
           </p>
-          <LinkArrow href="/#visita">Reservar un paseo</LinkArrow>
+          <LinkArrow href="/reservas?tipo=paseos">Reservar un paseo</LinkArrow>
         </div>
         <Photo
           photo="paseos/17"

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Photo } from "./Photo";
 
 const INFO: { k: string; v: React.ReactNode }[] = [
@@ -40,9 +41,9 @@ export function Visita() {
             ))}
           </ul>
           <div className="cta-row reveal">
-            <a href="#" className="btn primary">
+            <Link href="/reservas?tipo=restaurant" className="btn primary">
               Reservar mesa
-            </a>
+            </Link>
             <a href="#" className="btn ghost">
               Gift card
             </a>

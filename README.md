@@ -20,9 +20,10 @@ Abrí [http://localhost:3000](http://localhost:3000).
 
 ## Estructura
 
-- `app/` — layout, páginas (home y `/restaurant`) y estilos globales.
+- `app/` — layout, páginas (home, `/restaurant` y `/reservas`) y estilos globales.
 - `components/` — una pieza por sección, más `Photo` (la primitiva de imagen), `Lightbox` (visor a pantalla completa) y `SiteAnimations`, que centraliza Lenis + GSAP ScrollTrigger.
-- `lib/` — `photos.ts` y el manifiesto generado de imágenes.
+- `lib/` — `photos.ts`, el manifiesto generado de imágenes y `smooth-scroll.ts`
+  (el puente para mover la página a través de Lenis).
 - `assets/imgs/` — originales de cámara, ordenados por área. No se sirven: son el archivo del que sale `public/imgs/`.
 - `public/imgs/` — versiones web (WebP redimensionado) generadas por el script.
 - `reference/` — prototipo HTML original usado como base del diseño.
