@@ -81,7 +81,7 @@ export function HorariosForm({
                 name={`nota-${dia.dia}`}
                 defaultValue={dia.nota}
                 maxLength={120}
-                placeholder="Nota (última mesa 15 hs, feriados…)"
+                placeholder="Nota: última mesa 15 hs, feriados…"
                 aria-label={`${nombreDia(dia.dia)}: nota`}
               />
             </li>

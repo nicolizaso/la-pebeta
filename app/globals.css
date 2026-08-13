@@ -1652,6 +1652,18 @@ footer .fine {
   grid-template-columns: 258px 1fr;
   min-height: 100vh;
 }
+/* el aside es sticky y mide una pantalla, así que la columna y su línea las
+   pinta el fondo de la grilla: si no, abajo del pliegue se cortan */
+@media (min-width: 901px) {
+  .admin {
+    background: linear-gradient(
+      to right,
+      var(--paper-light) 0 257px,
+      var(--line) 257px 258px,
+      var(--paper) 258px
+    );
+  }
+}
 .admin-aside {
   position: sticky;
   top: 0;
@@ -1934,6 +1946,10 @@ footer .fine {
   vertical-align: top;
   line-height: 1.45;
 }
+/* la fecha no se parte en dos renglones */
+.admin-tabla td:first-child {
+  white-space: nowrap;
+}
 .admin-tabla tr:last-child td {
   border-bottom: 0;
 }
@@ -2083,8 +2099,9 @@ footer .fine {
   padding: 9px 11px;
   transition: border-color 0.25s ease;
 }
+/* ancho para el reloj de 12 horas, que es el más largo */
 .admin-dia-horas input {
-  width: 116px;
+  width: 132px;
 }
 .admin-dia-nota {
   width: 100%;
@@ -2264,9 +2281,18 @@ footer .fine {
     flex-direction: row;
     gap: 20px;
   }
+  /* la fecha y el estado arriba, el nombre debajo */
   .admin-proximas li {
     grid-template-columns: 1fr auto;
     gap: 8px 16px;
+  }
+  .admin-proximas-fecha,
+  .admin-proximas li .admin-estado {
+    grid-row: 1;
+  }
+  .admin-proximas-quien {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
   .admin-dia {
     grid-template-columns: 1fr;
