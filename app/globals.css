@@ -1337,6 +1337,27 @@ footer .fine {
   font-size: 11px;
   color: rgba(35, 40, 31, 0.5);
   margin-top: 34px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+/* la entrada al panel: discreta, del tamaño de la línea legal */
+.footer-admin {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+  color: rgba(35, 40, 31, 0.6);
+  text-decoration: none;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+.footer-admin:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper-light);
 }
 
 /* ---------- full-screen photo viewer ---------- */
@@ -1619,5 +1640,662 @@ footer .fine {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- panel de admin ----------
+   Otra herramienta, no otra estética: misma paleta y misma tipografía que el
+   sitio, pero sin fotos ni animaciones. Todo lo de acá vive detrás de /admin,
+   así que las clases van con prefijo y no se cruzan con las de las secciones. */
+.admin {
+  display: grid;
+  grid-template-columns: 258px 1fr;
+  min-height: 100vh;
+}
+/* el aside es sticky y mide una pantalla, así que la columna y su línea las
+   pinta el fondo de la grilla: si no, abajo del pliegue se cortan */
+@media (min-width: 901px) {
+  .admin {
+    background: linear-gradient(
+      to right,
+      var(--paper-light) 0 257px,
+      var(--line) 257px 258px,
+      var(--paper) 258px
+    );
+  }
+}
+.admin-aside {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  padding: 34px 24px;
+  background: var(--paper-light);
+  border-right: 1px solid var(--line);
+}
+.admin-marca {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.admin-marca .logo {
+  font-family: var(--ff-display);
+  font-size: 25px;
+  line-height: 1;
+}
+.admin-marca-pie {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+
+/* el índice de secciones: un botón por sección, el de la abierta en negativo */
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.admin-nav-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  text-decoration: none;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+.admin-nav-btn:hover {
+  border-color: var(--ink);
+}
+.admin-nav-btn.activa {
+  background: var(--ink);
+  color: var(--paper-light);
+  border-color: var(--ink);
+}
+.admin-nav-etiqueta {
+  font-size: 14.5px;
+}
+.admin-nav-detalle {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.5);
+}
+.admin-nav-btn.activa .admin-nav-detalle {
+  color: rgba(250, 247, 239, 0.6);
+}
+
+.admin-aside-pie {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.admin-aside-pie a,
+.admin-aside-pie button {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: rgba(35, 40, 31, 0.55);
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+.admin-aside-pie a:hover,
+.admin-aside-pie button:hover {
+  color: var(--ink);
+}
+
+.admin-main {
+  padding: clamp(30px, 4vw, 58px) clamp(20px, 4vw, 58px) 100px;
+  max-width: 1200px;
+}
+.admin-head {
+  margin-bottom: 34px;
+}
+.admin-head h1 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.05;
+  margin: 0 0 12px;
+}
+.admin-head p {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(35, 40, 31, 0.72);
+}
+.admin-head a {
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+  transition: border-color 0.25s ease;
+}
+.admin-head a:hover {
+  border-bottom-color: var(--ink);
+}
+
+/* ---------- resumen ---------- */
+.admin-fichas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+  gap: 14px;
+  margin-bottom: 44px;
+}
+.admin-ficha {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+}
+.admin-ficha strong {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: 42px;
+  line-height: 1;
+}
+.admin-ficha span {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.55);
+}
+
+.admin-bloque-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding-bottom: 12px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.admin-bloque-head h2 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: 27px;
+  margin: 0;
+}
+.admin-bloque-head a {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--clay);
+  text-decoration: none;
+}
+.admin-proximas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.admin-proximas li {
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--line);
+}
+.admin-proximas-fecha {
+  font-family: var(--ff-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.6);
+}
+.admin-proximas-quien {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 15px;
+}
+.admin-proximas-quien em {
+  font-style: normal;
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.5);
+}
+
+/* ---------- reservas ---------- */
+.admin-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  margin-bottom: 22px;
+}
+.admin-filtro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-chip {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  color: rgba(35, 40, 31, 0.65);
+  text-decoration: none;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+.admin-chip:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.admin-chip.activo {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper-light);
+}
+.admin-conteo {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.5);
+  margin: 0 0 14px;
+}
+
+.admin-tabla-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  background: var(--paper-light);
+}
+.admin-tabla {
+  width: 100%;
+  min-width: 940px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.admin-tabla th {
+  font-family: var(--ff-mono);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.5);
+  text-align: left;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.admin-tabla td {
+  padding: 15px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  line-height: 1.45;
+}
+/* la fecha no se parte en dos renglones */
+.admin-tabla td:first-child {
+  white-space: nowrap;
+}
+.admin-tabla tr:last-child td {
+  border-bottom: 0;
+}
+.admin-tabla tr.apagada {
+  opacity: 0.55;
+}
+.admin-tabla a {
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+  transition: border-color 0.25s ease;
+}
+.admin-tabla a:hover {
+  border-bottom-color: var(--ink);
+}
+.admin-sub {
+  display: block;
+  width: fit-content;
+  margin-top: 5px;
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: rgba(35, 40, 31, 0.5);
+}
+.admin-comentarios {
+  max-width: 250px;
+  color: rgba(35, 40, 31, 0.7);
+}
+.admin-estado {
+  display: inline-block;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+}
+.admin-estado.pendiente {
+  color: var(--clay);
+  border-color: rgba(168, 85, 46, 0.45);
+  background: rgba(168, 85, 46, 0.08);
+}
+.admin-estado.confirmada {
+  color: var(--moss-deep);
+  border-color: rgba(73, 87, 60, 0.45);
+  background: rgba(73, 87, 60, 0.1);
+}
+.admin-estado.cancelada {
+  color: rgba(35, 40, 31, 0.45);
+}
+.admin-acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.admin-btn {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 9px 12px;
+  background: var(--ink);
+  color: var(--paper-light);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+.admin-btn:hover {
+  background: transparent;
+  color: var(--ink);
+}
+.admin-btn.suave {
+  background: transparent;
+  color: rgba(35, 40, 31, 0.65);
+  border-color: var(--line);
+}
+.admin-btn.suave:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* ---------- horarios ---------- */
+.admin-horarios {
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  padding: clamp(20px, 3vw, 30px);
+  margin-bottom: 26px;
+}
+.admin-horarios-head h2 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: 28px;
+  margin: 0 0 6px;
+}
+.admin-horarios-head p {
+  margin: 0 0 8px;
+  font-size: 14.5px;
+  color: rgba(35, 40, 31, 0.65);
+}
+.admin-dias {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0;
+}
+.admin-dia {
+  display: grid;
+  grid-template-columns: 150px auto 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.admin-dia:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.admin-dia-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.admin-dia.cerrado .admin-dia-switch {
+  color: rgba(35, 40, 31, 0.5);
+}
+.admin-dia-switch input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--moss);
+  cursor: pointer;
+}
+.admin-dia-horas {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  color: rgba(35, 40, 31, 0.5);
+}
+.admin-dia-horas input,
+.admin-dia-nota {
+  font-family: var(--ff-body);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 9px 11px;
+  transition: border-color 0.25s ease;
+}
+/* ancho para el reloj de 12 horas, que es el más largo */
+.admin-dia-horas input {
+  width: 132px;
+}
+.admin-dia-nota {
+  width: 100%;
+}
+.admin-dia-horas input:hover,
+.admin-dia-nota:hover {
+  border-color: rgba(35, 40, 31, 0.34);
+}
+.admin-dia-horas input:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.admin-dia-cerrado {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.45);
+}
+.admin-horarios-pie {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.admin-horarios-pie .btn {
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  cursor: pointer;
+}
+.admin-horarios-pie .btn[disabled] {
+  opacity: 0.55;
+  cursor: progress;
+}
+.admin-horarios-msg {
+  margin: 0;
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+.admin-horarios-msg.error {
+  color: var(--clay);
+}
+
+/* ---------- avisos del panel ---------- */
+.admin-aviso {
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  padding: 20px 22px;
+  margin-bottom: 26px;
+}
+.admin-aviso h3 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: 22px;
+  margin: 0;
+}
+.admin-aviso-cuerpo {
+  margin-top: 8px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(35, 40, 31, 0.72);
+}
+.admin-aviso-cuerpo p {
+  margin: 0;
+}
+.admin-aviso-alerta {
+  border-color: rgba(168, 85, 46, 0.45);
+  background: rgba(168, 85, 46, 0.07);
+}
+.admin-aviso code {
+  font-family: var(--ff-mono);
+  font-size: 13px;
+  background: rgba(35, 40, 31, 0.08);
+  padding: 2px 5px;
+}
+
+/* ---------- la puerta ---------- */
+.admin-puerta {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--moss-deep);
+}
+.admin-puerta-card {
+  width: min(420px, 100%);
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  padding: clamp(26px, 4vw, 38px);
+}
+.admin-puerta-card h1 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(30px, 4vw, 40px);
+  line-height: 1.05;
+  margin: 0 0 12px;
+}
+.admin-puerta-card > p {
+  margin: 0 0 24px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(35, 40, 31, 0.7);
+}
+.admin-puerta-card .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+}
+.admin-puerta-card label {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.6);
+}
+.admin-puerta-card input {
+  font-family: var(--ff-body);
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 11px 13px;
+  width: 100%;
+}
+.admin-puerta-error {
+  min-height: 1.5em;
+  margin: 12px 0 16px;
+  font-size: 13.5px;
+  color: var(--clay);
+}
+.admin-puerta-card .btn {
+  width: 100%;
+  text-align: center;
+  border-radius: 0;
+  cursor: pointer;
+}
+.admin-puerta-volver {
+  display: inline-block;
+  margin-top: 20px;
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.5);
+  text-decoration: none;
+}
+.admin-puerta-volver:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 900px) {
+  .admin {
+    grid-template-columns: 1fr;
+  }
+  /* el aside pasa a ser una barra arriba, con los mismos botones en fila */
+  .admin-aside {
+    position: static;
+    height: auto;
+    gap: 20px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .admin-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .admin-nav-btn {
+    flex: 1 1 150px;
+  }
+  .admin-aside-pie {
+    flex-direction: row;
+    gap: 20px;
+  }
+  /* la fecha y el estado arriba, el nombre debajo */
+  .admin-proximas li {
+    grid-template-columns: 1fr auto;
+    gap: 8px 16px;
+  }
+  .admin-proximas-fecha,
+  .admin-proximas li .admin-estado {
+    grid-row: 1;
+  }
+  .admin-proximas-quien {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .admin-dia {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 }

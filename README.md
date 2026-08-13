@@ -20,11 +20,13 @@ Abrí [http://localhost:3000](http://localhost:3000).
 
 ## Estructura
 
-- `app/` — layout, páginas (home, `/restaurant` y `/reservas`), la API (`app/api/`) y estilos globales.
-- `components/` — una pieza por sección, más `Photo` (la primitiva de imagen), `Lightbox` (visor a pantalla completa) y `SiteAnimations`, que centraliza Lenis + GSAP ScrollTrigger.
+- `app/` — layout, páginas (home, `/restaurant` y `/reservas`), el panel
+  (`app/admin/`), la API (`app/api/`) y estilos globales.
+- `components/` — una pieza por sección, más `Photo` (la primitiva de imagen), `Lightbox` (visor a pantalla completa) y `SiteAnimations`, que centraliza Lenis + GSAP ScrollTrigger. En `components/admin/` van las del panel.
 - `lib/` — `photos.ts` y el manifiesto generado de imágenes, `db.ts` (los tipos
-  y el acceso a la base), `supabase.ts` (la conexión), `reservas.ts` (las reglas
-  de una reserva), `contacto.ts` y `smooth-scroll.ts` (el puente para mover la
+  y el acceso a la base), `supabase.ts` (la conexión), `reservas.ts` y
+  `horarios.ts` (las reglas de cada uno), `admin.ts` (la puerta del panel),
+  `fechas.ts`, `contacto.ts` y `smooth-scroll.ts` (el puente para mover la
   página a través de Lenis).
 - `assets/imgs/` — originales de cámara, ordenados por área. No se sirven: son el archivo del que sale `public/imgs/`.
 - `public/imgs/` — versiones web (WebP redimensionado) generadas por el script.
@@ -32,32 +34,36 @@ Abrí [http://localhost:3000](http://localhost:3000).
 
 ## Datos
 
-Los datos viven en Postgres, en Supabase. Son tres tablas:
+Los datos viven en Postgres, en Supabase. Son cuatro tablas:
 
 | Tabla | Qué guarda |
 | --- | --- |
 | `pebeta_reservas` | Pedidos de paseo y de mesa, con `estado` (`pendiente` / `confirmada` / `cancelada`) y un `codigo` corto para dictar por teléfono. |
 | `pebeta_productos` | El catálogo de la proveeduría. |
 | `pebeta_compras` | Las compras de la tienda, con sus ítems y el total. |
+| `pebeta_horarios` | Los horarios de atención: una fila por área (`proveeduria` / `restaurant`) y día de la semana. |
 
 Van con prefijo porque, por ahora, comparten proyecto de Supabase con otra app.
-Cuando La Pebeta tenga el suyo, se cambian el prefijo y las dos variables de
+Cuando La Pebeta tenga el suyo, se cambian el prefijo y las variables de
 entorno y no hay nada más que tocar: `lib/db.ts` es el único módulo que habla
 con la base, y de ahí salen los tipos y las funciones que usan la API, el
-formulario y el ABM que viene.
+formulario y el panel.
 
 ### Configuración
 
 ```bash
 SUPABASE_URL=https://<proyecto>.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_…
+SUPABASE_SECRET_KEY=sb_secret_…        # sólo la usa /admin
+ADMIN_PASSWORD=…                       # la clave del panel
 ```
 
 En local van en `.env.local`; en Vercel, en las environment variables del
 proyecto. La publishable key es pública a propósito: lo que se puede hacer con
-ella lo decide RLS, y hoy es sólo dejar una reserva —que entra siempre como
-`pendiente`— y leer el catálogo publicado. Listar reservas, confirmarlas o
-cancelarlas necesita la secret key, que entra con el ABM y su login.
+ella lo decide RLS, y es dejar una reserva —que entra siempre como
+`pendiente`—, leer el catálogo publicado y leer los horarios. Listar reservas,
+confirmarlas, cancelarlas y cargar horarios necesita la secret key, que sólo se
+usa del lado del server y sólo desde el panel.
 
 Las reglas del negocio están dos veces a propósito: en `lib/reservas.ts`, que
 es lo que valida la API, y como constraints de la tabla (jueves a domingo,
@@ -69,7 +75,28 @@ siquiera escribiendo contra la base de forma directa.
 `POST /api/reservas` valida, agrega la fila y devuelve la reserva con su
 código. El formulario de `/reservas` es el que lo llama, tanto para paseos como
 para mesas. No hay GET: el listado tiene teléfonos y mails, así que sale por el
-ABM cuando tenga login.
+panel, que lee del lado del server con la secret key.
+
+## Panel
+
+`/admin` —se entra por el botón del pie del sitio— es la parte de adentro. Un
+aside con las secciones y, al lado, la que esté abierta:
+
+| Sección | Qué hace |
+| --- | --- |
+| Resumen | Lo que hay tomado de hoy en adelante: pendientes, reservas del día, personas anotadas. |
+| Reservas | Paseos y mesas en la misma tabla, con filtros por qué, cuándo y estado, y los botones para confirmar, cancelar o reabrir. |
+| Horarios | La semana de la proveeduría y la del restaurant, siete renglones cada una, con su nota por día. |
+
+La puerta es una clave en `ADMIN_PASSWORD` y una cookie httpOnly con su hash:
+alcanza para que las reservas no queden a la vista en una URL adivinable, y el
+día que entren varias personas se cambia por auth de verdad sin tocar las
+páginas, que preguntan todas por `haySesion()` de `lib/admin.ts`. Sin esa
+variable el panel queda abierto y lo avisa en pantalla.
+
+Las escrituras son server actions (`app/admin/acciones.ts`), y cada una vuelve
+a preguntar por la sesión: una action es un endpoint más, y que la página se
+haya renderizado no alcanza como permiso.
 
 ## Imágenes
 
