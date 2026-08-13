@@ -962,6 +962,219 @@ h2.section-title {
   color: var(--paper-light);
 }
 
+/* ---------- reservas ----------
+   Two photo panels working as a single selector. The section keeps a dark
+   ground so the nav bar — light until it scrolls — stays readable at the top of
+   the page, same as it is over a hero photo. */
+.reservas {
+  background: var(--moss-deep);
+  color: var(--paper-light);
+  /* one screen: heading and both panels without scrolling */
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: clamp(118px, 14vw, 160px) 0 clamp(56px, 7vw, 90px);
+}
+.reservas > .wrap {
+  width: 100%;
+}
+.reservas .eyebrow {
+  color: var(--wheat);
+}
+.reservas .eyebrow::before {
+  background: var(--wheat);
+}
+/* headline on the left, the line that frames the choice on the right */
+.reservas-head {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(24px, 4vw, 70px);
+  align-items: end;
+  margin-bottom: clamp(28px, 4vw, 48px);
+}
+.reservas-head h1 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(38px, 5.4vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -0.005em;
+  margin: 0;
+  max-width: 13ch;
+}
+.reservas-head p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.66;
+  color: rgba(250, 247, 239, 0.8);
+  max-width: 42ch;
+}
+
+.reserva-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 2.4vw, 26px);
+}
+.reserva-card {
+  position: relative;
+  isolation: isolate;
+  min-height: clamp(320px, 44vh, 480px);
+  display: flex;
+  align-items: flex-end;
+  border: 1px solid rgba(250, 247, 239, 0.22);
+  transition: border-color 0.4s ease;
+}
+.reserva-card-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+/* the wash travels with the copy instead of the frame, so the eyebrow keeps
+   its contrast whatever height the panel ends up at */
+.reserva-card-body {
+  position: relative;
+  z-index: 2;
+  padding: clamp(34px, 5vw, 60px) clamp(22px, 3vw, 40px) clamp(22px, 3vw, 40px);
+  width: 100%;
+  background: linear-gradient(
+    0deg,
+    rgba(14, 18, 12, 0.78) 0%,
+    rgba(14, 18, 12, 0.62) 55%,
+    rgba(14, 18, 12, 0) 100%
+  );
+}
+.reserva-card h2 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(30px, 3.8vw, 52px);
+  line-height: 1.04;
+  margin: 0 0 12px;
+}
+.reserva-card p {
+  margin: 0 0 26px;
+  max-width: 34ch;
+  font-size: 15.5px;
+  line-height: 1.62;
+  color: rgba(250, 247, 239, 0.86);
+}
+.reserva-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.reserva-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 12px 22px;
+  border: 1px solid rgba(250, 247, 239, 0.65);
+  transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease;
+}
+.reserva-pick svg {
+  transition: transform 0.3s ease;
+}
+.reserva-when {
+  font-family: var(--ff-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(250, 247, 239, 0.72);
+}
+/* the whole panel is the target — same pattern as the lightbox opener */
+.reserva-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.reserva-card:hover .photo-media img,
+.reserva-card:focus-within .photo-media img {
+  transform: scale(1.05);
+}
+.reserva-card:hover .reserva-pick,
+.reserva-card:focus-within .reserva-pick {
+  background: var(--paper-light);
+  color: var(--ink);
+  border-color: var(--paper-light);
+}
+.reserva-card:hover .reserva-pick svg {
+  transform: translateX(5px);
+}
+.reserva-card.activa {
+  border-color: var(--wheat);
+}
+.reserva-card.activa .reserva-pick {
+  background: var(--wheat);
+  color: var(--ink);
+  border-color: var(--wheat);
+}
+
+/* ---------- reservas: detalle de la opción elegida ----------
+   Rendered after mount, so it can't lean on the `.reveal` hook (SiteAnimations
+   sweeps the DOM once); it fades in on its own. */
+.reserva-detalle {
+  padding: clamp(60px, 8vw, 110px) 0;
+  border-bottom: 1px solid var(--line);
+}
+.reserva-detalle-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(34px, 5vw, 88px);
+  align-items: start;
+  animation: detalleIn 0.65s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes detalleIn {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.reserva-detalle .section-title {
+  margin-bottom: 22px;
+}
+.reserva-nota {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.68;
+  color: rgba(35, 40, 31, 0.78);
+  max-width: 44ch;
+}
+.reserva-nota strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+.reserva-detalle .info-list {
+  margin-top: 0;
+}
+.reserva-detalle .info-list .v a {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 2px;
+  text-decoration: none;
+  transition: border-color 0.3s ease;
+}
+.reserva-detalle .info-list .v a:hover {
+  border-bottom-color: var(--ink);
+}
+.reserva-vacio {
+  margin: 0;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.5);
+}
+
 /* ---------- footer ---------- */
 footer {
   padding: 56px 0 40px;
@@ -1142,6 +1355,23 @@ footer .fine {
     gap: 30px;
   }
   .visita .wrap {
+    grid-template-columns: 1fr;
+  }
+  .reservas {
+    min-height: 0;
+  }
+  .reservas-head {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 18px;
+  }
+  .reserva-cards {
+    grid-template-columns: 1fr;
+  }
+  .reserva-card {
+    min-height: clamp(320px, 62vw, 440px);
+  }
+  .reserva-detalle-inner {
     grid-template-columns: 1fr;
   }
   .stat-row {

@@ -36,7 +36,7 @@ export function Header() {
             {link.label}
           </Link>
         ))}
-        <Link href="/#visita" className="cta" onClick={close}>
+        <Link href="/reservas" className="cta" onClick={close}>
           Reservar
         </Link>
       </nav>

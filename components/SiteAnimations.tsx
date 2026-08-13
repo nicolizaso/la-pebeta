@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { registerSmoothScroll } from "@/lib/smooth-scroll";
 
 /**
  * Mounts once at the page root. Wires up Lenis smooth scrolling and every
@@ -44,6 +45,7 @@ export function SiteAnimations() {
     });
 
     lenis.on("scroll", ScrollTrigger.update);
+    registerSmoothScroll(lenis);
     const tick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
@@ -278,6 +280,7 @@ export function SiteAnimations() {
       window.removeEventListener("load", onLoad);
       tickers.forEach((fn) => gsap.ticker.remove(fn));
       gsap.ticker.remove(tick);
+      registerSmoothScroll(null);
       lenis.destroy();
     };
   }, []);
