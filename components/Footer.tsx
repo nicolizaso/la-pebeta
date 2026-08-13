@@ -1,3 +1,5 @@
+import { WHATSAPP } from "@/lib/contacto";
+
 export function Footer() {
   return (
     <footer>
@@ -7,7 +9,9 @@ export function Footer() {
         </a>
         <div className="fcol">
           <a href="#">Instagram</a>
-          <a href="#">WhatsApp</a>
+          <a href={WHATSAPP} target="_blank" rel="noreferrer">
+            WhatsApp
+          </a>
           <a href="#">Facebook</a>
         </div>
       </div>

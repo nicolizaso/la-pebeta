@@ -1155,7 +1155,7 @@ h2.section-title {
   color: var(--ink);
 }
 .reserva-detalle .info-list {
-  margin-top: 0;
+  margin: 30px 0 0;
 }
 .reserva-detalle .info-list .v a {
   border-bottom: 1px solid var(--line);
@@ -1166,6 +1166,122 @@ h2.section-title {
 .reserva-detalle .info-list .v a:hover {
   border-bottom-color: var(--ink);
 }
+/* ---------- reservas: formulario ----------
+   El alta que escribe en data/db.json. Vive sobre paper-light para separarse
+   del fondo de la sección sin cambiar de paleta. */
+.reserva-form {
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  padding: clamp(22px, 3vw, 34px);
+}
+.reserva-form-head {
+  margin-bottom: 22px;
+}
+.reserva-form-paso {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+.reserva-form h3 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(24px, 2.6vw, 32px);
+  line-height: 1.1;
+  margin: 8px 0 0;
+}
+.reserva-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.reserva-campos .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+}
+.reserva-campos .campo.ancho {
+  grid-column: span 2;
+}
+.reserva-campos label {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.6);
+}
+.reserva-campos input,
+.reserva-campos select,
+.reserva-campos textarea {
+  font-family: var(--ff-body);
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 11px 13px;
+  width: 100%;
+  transition: border-color 0.3s ease;
+}
+.reserva-campos textarea {
+  resize: vertical;
+  min-height: 62px;
+}
+.reserva-campos input:hover,
+.reserva-campos select:hover,
+.reserva-campos textarea:hover {
+  border-color: rgba(35, 40, 31, 0.34);
+}
+.reserva-campos input:read-only {
+  color: rgba(35, 40, 31, 0.6);
+  background: rgba(35, 40, 31, 0.05);
+}
+.reserva-campos .pista {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.45);
+}
+/* siempre ocupa su renglón, así el formulario no salta cuando aparece el error */
+.reserva-form-error {
+  min-height: 1.5em;
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--clay);
+}
+.reserva-form-nota {
+  margin: 0 0 24px;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: rgba(35, 40, 31, 0.78);
+}
+.reserva-form-nota strong {
+  font-family: var(--ff-mono);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+.reserva-form-acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+/* un poco más angostos que los del sitio, para que el par entre en un renglón */
+.reserva-form-acciones .btn {
+  border-radius: 0;
+  cursor: pointer;
+  padding: 15px 20px;
+}
+.reserva-form-acciones .btn[disabled] {
+  opacity: 0.55;
+  cursor: progress;
+}
+
 .reserva-vacio {
   margin: 0;
   font-family: var(--ff-mono);
@@ -1373,6 +1489,12 @@ footer .fine {
   }
   .reserva-detalle-inner {
     grid-template-columns: 1fr;
+  }
+  .reserva-campos {
+    grid-template-columns: 1fr;
+  }
+  .reserva-campos .campo.ancho {
+    grid-column: auto;
   }
   .stat-row {
     gap: 26px;

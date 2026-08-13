@@ -3,10 +3,10 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { Photo } from "./Photo";
+import { ReservaForm } from "./ReservaForm";
+import type { ReservaTipo } from "@/lib/db";
 import type { PhotoKey } from "@/lib/photos";
 import { scrollToElement } from "@/lib/smooth-scroll";
-
-export type ReservaTipo = "paseos" | "restaurant";
 
 type Opcion = {
   id: ReservaTipo;
@@ -21,8 +21,8 @@ type Opcion = {
   detalleTitulo: string;
   info: { k: string; v: React.ReactNode }[];
   nota: React.ReactNode;
-  primaria: string;
-  secundaria: string;
+  /** Texto del botón que confirma el pedido de reserva. */
+  enviar: string;
 };
 
 const DIRECCION = (
@@ -59,8 +59,7 @@ const OPCIONES: Opcion[] = [
         dejamos anotado en la misma visita.
       </>
     ),
-    primaria: "Reservar el paseo",
-    secundaria: "Consultar disponibilidad",
+    enviar: "Reservar el paseo",
   },
   {
     id: "restaurant",
@@ -89,8 +88,7 @@ const OPCIONES: Opcion[] = [
         con el aviso <strong>la cocina te arma las opciones</strong> antes de que llegues.
       </>
     ),
-    primaria: "Reservar la mesa",
-    secundaria: "Consultar disponibilidad",
+    enviar: "Reservar la mesa",
   },
 ];
 
@@ -103,7 +101,14 @@ const OPCIONES: Opcion[] = [
  * (SiteAnimations only sweeps the DOM once) — it comes in on its own CSS
  * animation instead.
  */
-export function ReservasSelector({ inicial }: { inicial?: ReservaTipo }) {
+export function ReservasSelector({
+  inicial,
+  hoy,
+}: {
+  inicial?: ReservaTipo;
+  /** Fecha de hoy en Los Cardales; la calcula el server para el mínimo del calendario. */
+  hoy: string;
+}) {
   const [elegida, setElegida] = useState<ReservaTipo | null>(inicial ?? null);
   const detalleRef = useRef<HTMLDivElement>(null);
 
@@ -182,8 +187,6 @@ export function ReservasSelector({ inicial }: { inicial?: ReservaTipo }) {
                 <div className="eyebrow">{opcion.titulo}</div>
                 <h2 className="section-title">{opcion.detalleTitulo}</h2>
                 <p className="reserva-nota">{opcion.nota}</p>
-              </div>
-              <div>
                 <ul className="info-list">
                   {opcion.info.map((item) => (
                     <li key={item.k}>
@@ -192,15 +195,8 @@ export function ReservasSelector({ inicial }: { inicial?: ReservaTipo }) {
                     </li>
                   ))}
                 </ul>
-                <div className="cta-row">
-                  <a href="#" className="btn primary">
-                    {opcion.primaria}
-                  </a>
-                  <a href="#" className="btn ghost">
-                    {opcion.secundaria}
-                  </a>
-                </div>
               </div>
+              <ReservaForm tipo={opcion.id} hoy={hoy} enviar={opcion.enviar} />
             </div>
           ) : (
             <p className="reserva-vacio">
