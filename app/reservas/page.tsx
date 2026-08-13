@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
-import { ReservasSelector, type ReservaTipo } from "@/components/ReservasSelector";
+import { ReservasSelector } from "@/components/ReservasSelector";
+import type { ReservaTipo } from "@/lib/db";
+import { esReservaTipo, hoyISO } from "@/lib/reservas";
 import { Footer } from "@/components/Footer";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { Lightbox } from "@/components/Lightbox";
@@ -18,15 +20,14 @@ export default async function ReservasPage({
   searchParams: Promise<{ tipo?: string }>;
 }) {
   const { tipo } = await searchParams;
-  const inicial: ReservaTipo | undefined =
-    tipo === "paseos" || tipo === "restaurant" ? tipo : undefined;
+  const inicial: ReservaTipo | undefined = esReservaTipo(tipo) ? tipo : undefined;
 
   return (
     <>
       <SiteAnimations />
       <Header />
       <main>
-        <ReservasSelector inicial={inicial} />
+        <ReservasSelector inicial={inicial} hoy={hoyISO()} />
       </main>
       <Footer />
       <Lightbox />

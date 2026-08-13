@@ -1,0 +1,10 @@
+{
+  "meta": {
+    "version": 1,
+    "descripcion": "Base de datos de prueba de La Pebeta: reservas, productos de la proveeduría y compras. Es el archivo al que apunta el ABM de admin.",
+    "actualizado": "2026-08-13T00:00:00.000Z"
+  },
+  "reservas": [],
+  "productos": [],
+  "compras": []
+}
