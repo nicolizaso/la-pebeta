@@ -6,7 +6,7 @@ import { supabase, supabaseAdmin } from "./supabase";
  * pasa por este archivo, así que mover los datos de lugar es reescribir esto y
  * nada más.
  *
- * Hoy son cinco tablas en Postgres (Supabase), con prefijo `pebeta_` porque
+ * Hoy son seis tablas en Postgres (Supabase), con prefijo `pebeta_` porque
  * comparten proyecto con otra app. Cuando La Pebeta tenga su propio proyecto,
  * cambia el prefijo y la conexión; los tipos y las firmas quedan igual.
  *
@@ -20,6 +20,7 @@ export const TABLAS = {
   categorias: "pebeta_categorias",
   compras: "pebeta_compras",
   horarios: "pebeta_horarios",
+  notas: "pebeta_notas",
 } as const;
 
 export type ReservaTipo = "paseos" | "restaurant";
@@ -99,6 +100,46 @@ export type DatosProducto = {
 
 /** El catálogo publicado, leído de una sola vez: las categorías y sus productos. */
 export type Catalogo = { categorias: Categoria[]; productos: Producto[] };
+
+/**
+ * Una nota del blog.
+ *
+ * `fecha` hace las dos cosas: es la que se lee al pie del título y es cuándo
+ * sale. Con `publicada` en true y la fecha todavía por venir, la nota queda
+ * cargada y aparece sola cuando llega el día, sin que nadie tenga que volver al
+ * panel a apretar un botón.
+ */
+export type Nota = {
+  id: string;
+  /** Lo que va en la URL: `/blog/la-primera-cosecha`. */
+  slug: string;
+  titulo: string;
+  /** La línea que se lee debajo del título, en el listado y en la nota. */
+  bajada: string;
+  /** El texto, en párrafos separados por un renglón en blanco. */
+  cuerpo: string;
+  autor: string;
+  /** Clave del manifiesto de fotos ("huerta/17"), o vacía si no tiene. */
+  foto: string;
+  /** ¿Está para salir? Sin esto no se ve, tenga la fecha que tenga. */
+  publicada: boolean;
+  /** ISO. Cuándo sale y qué fecha lleva. */
+  fecha: string;
+  creada: string;
+  actualizada: string;
+};
+
+/** Lo que se carga en el formulario del panel, ya validado. */
+export type DatosNota = {
+  slug: string;
+  titulo: string;
+  bajada: string;
+  cuerpo: string;
+  autor: string;
+  foto: string;
+  publicada: boolean;
+  fecha: string;
+};
 
 export type CompraItem = {
   productoId: string;
@@ -318,6 +359,124 @@ export async function borrarCategoria(id: string): Promise<void> {
   const { error } = await supabaseAdmin().from(TABLAS.categorias).delete().eq("id", id);
 
   if (error) throw new Error(`No se pudo borrar la categoría: ${error.message}`);
+}
+
+/* ---------- el blog ----------
+   Las notas se leen con la publishable key —son públicas, es lo que hay para
+   leer—, pero la policy sólo deja ver las que están publicadas y ya salieron.
+   Una nota programada no existe para afuera hasta que llega su fecha: la misma
+   condición está en la base y acá. */
+
+/** Las notas que ya salieron, la última primero. */
+export async function listarNotas(limite = 0): Promise<Nota[]> {
+  let consulta = supabase()
+    .from(TABLAS.notas)
+    .select()
+    .eq("publicada", true)
+    .lte("fecha", new Date().toISOString())
+    .order("fecha", { ascending: false });
+
+  if (limite > 0) consulta = consulta.limit(limite);
+
+  const { data, error } = await consulta;
+  if (error) throw new Error(`No se pudieron leer las notas: ${error.message}`);
+  return (data ?? []) as Nota[];
+}
+
+/** Una nota por su slug, si ya salió. Null si no está o todavía no es su día. */
+export async function buscarNotaPublicada(slug: string): Promise<Nota | null> {
+  const { data, error } = await supabase()
+    .from(TABLAS.notas)
+    .select()
+    .eq("slug", slug)
+    .eq("publicada", true)
+    .lte("fecha", new Date().toISOString())
+    .maybeSingle();
+
+  if (error) throw new Error(`No se pudo leer la nota: ${error.message}`);
+  return (data as Nota | null) ?? null;
+}
+
+/* Lo que sigue es del panel: borradores, notas programadas y las escrituras. */
+
+/** El blog entero: borradores, programadas y publicadas. */
+export async function listarNotasDelPanel(): Promise<Nota[]> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.notas)
+    .select()
+    .order("fecha", { ascending: false });
+
+  if (error) throw new Error(`No se pudieron leer las notas: ${error.message}`);
+  return (data ?? []) as Nota[];
+}
+
+/** Una nota por id, para editarla. Null si ya no está. */
+export async function buscarNota(id: string): Promise<Nota | null> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.notas)
+    .select()
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error(`No se pudo leer la nota: ${error.message}`);
+  return (data as Nota | null) ?? null;
+}
+
+/**
+ * ¿Hay otra nota con ese slug? El slug es la URL de la nota, así que no se
+ * puede repetir; la tabla lo impide igual, pero el panel prefiere decirlo con
+ * palabras antes de mandar.
+ */
+export async function slugOcupado(slug: string, exceptoId = ""): Promise<boolean> {
+  let consulta = supabaseAdmin().from(TABLAS.notas).select("id").eq("slug", slug);
+  if (exceptoId) consulta = consulta.neq("id", exceptoId);
+
+  const { data, error } = await consulta.limit(1);
+  if (error) throw new Error(`No se pudo revisar el slug: ${error.message}`);
+  return (data ?? []).length > 0;
+}
+
+/** Agrega una nota y devuelve el id con el que quedó guardada. */
+export async function crearNota(datos: DatosNota): Promise<string> {
+  const id = crypto.randomUUID();
+  const ahora = new Date().toISOString();
+
+  const { error } = await supabaseAdmin()
+    .from(TABLAS.notas)
+    .insert({ id, creada: ahora, actualizada: ahora, ...datos });
+
+  if (error) throw new Error(`No se pudo guardar la nota: ${error.message}`);
+  return id;
+}
+
+export async function actualizarNota(id: string, datos: DatosNota): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from(TABLAS.notas)
+    .update({ ...datos, actualizada: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) throw new Error(`No se pudo guardar la nota: ${error.message}`);
+}
+
+/**
+ * Sacar una nota del blog o volver a ponerla, sin abrir el formulario. Volver a
+ * ponerla no le toca la fecha: si era de la semana pasada, vuelve con la fecha
+ * que tenía; si estaba programada, sigue programada.
+ */
+export async function publicarNota(id: string, publicada: boolean): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from(TABLAS.notas)
+    .update({ publicada, actualizada: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) throw new Error(`No se pudo cambiar la nota: ${error.message}`);
+}
+
+/** Borra una nota de verdad: no queda en ningún lado. */
+export async function borrarNota(id: string): Promise<void> {
+  const { error } = await supabaseAdmin().from(TABLAS.notas).delete().eq("id", id);
+
+  if (error) throw new Error(`No se pudo borrar la nota: ${error.message}`);
 }
 
 /**

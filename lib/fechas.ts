@@ -26,6 +26,9 @@ export function fechaLarga(fecha: string): string {
   return LARGA.format(new Date(`${fecha}T12:00:00`));
 }
 
+/** La hora de la casa. Todo lo que se guarda con hora exacta se lee acá. */
+export const ZONA = "America/Argentina/Buenos_Aires";
+
 const MOMENTO = new Intl.DateTimeFormat("es-AR", {
   day: "numeric",
   month: "short",
@@ -33,7 +36,7 @@ const MOMENTO = new Intl.DateTimeFormat("es-AR", {
   minute: "2-digit",
   // de 0 a 23, como el resto de los horarios del sitio
   hourCycle: "h23",
-  timeZone: "America/Argentina/Buenos_Aires",
+  timeZone: ZONA,
 });
 
 /**
@@ -42,4 +45,72 @@ const MOMENTO = new Intl.DateTimeFormat("es-AR", {
  */
 export function fechaHora(iso: string): string {
   return MOMENTO.format(new Date(iso));
+}
+
+const DIA = new Intl.DateTimeFormat("es-AR", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: ZONA,
+});
+
+/** "21 de agosto de 2026" — la firma de una nota del blog. */
+export function fechaDelDia(iso: string): string {
+  return DIA.format(new Date(iso));
+}
+
+/**
+ * Las piezas de un instante en la hora de la casa, como las escribiría un
+ * reloj de Los Cardales.
+ */
+function partes(momento: Date): Record<string, string> {
+  const reloj = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: ZONA,
+    timeZoneName: "longOffset",
+  });
+
+  return Object.fromEntries(reloj.formatToParts(momento).map(({ type, value }) => [type, value]));
+}
+
+/**
+ * Un instante como lo espera un `<input type="datetime-local">`:
+ * "2026-08-21T14:35", ya pasado a la hora de la casa.
+ */
+export function paraElReloj(iso: string): string {
+  const momento = new Date(iso);
+  if (Number.isNaN(momento.getTime())) return "";
+
+  const { year, month, day, hour, minute } = partes(momento);
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
+/**
+ * El camino de vuelta: lo que escribió alguien en un `datetime-local`, leído
+ * como hora de Los Cardales y guardado como instante.
+ *
+ * El input no manda zona —"2026-08-21T14:35" y nada más—, así que hay que
+ * elegir una: si se la dejara al server, una nota programada para las nueve de
+ * la mañana saldría a las seis, porque en Vercel el reloj está en UTC. Se
+ * resuelve en dos pasos: se lee el texto como si fuera UTC para saber en qué
+ * momento del año cae, se le pregunta a la zona qué desfasaje tenía ese día
+ * —Argentina hace años que no mueve las agujas, pero preguntarlo no cuesta— y
+ * recién ahí se arma el instante de verdad.
+ */
+export function desdeElReloj(valor: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(valor)) return null;
+
+  const tentativo = new Date(`${valor}:00Z`);
+  if (Number.isNaN(tentativo.getTime())) return null;
+
+  // "GMT-03:00" → "-03:00"; en el borde del año nuevo la zona podría no tener
+  // nombre de offset, y ahí no queda más que confiar en el paso tentativo
+  const offset = partes(tentativo).timeZoneName?.replace("GMT", "") || "Z";
+  const momento = new Date(`${valor}:00${offset}`);
+  return Number.isNaN(momento.getTime()) ? null : momento.toISOString();
 }

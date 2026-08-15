@@ -2063,6 +2063,265 @@ h2.section-title {
   }
 }
 
+/* ---------- blog ----------
+   Las notas de la casa. La portada va oscura como la de la tienda —la barra de
+   navegación es clara hasta que se scrollea—, y de ahí para abajo la página se
+   angosta hasta el ancho de una columna de lectura. */
+.blog-portada {
+  background: var(--moss-deep);
+  color: var(--paper-light);
+  padding: clamp(116px, 14vw, 168px) 0 clamp(44px, 6vw, 76px);
+}
+.blog-portada .eyebrow {
+  color: var(--wheat);
+}
+.blog-portada .eyebrow::before {
+  background: var(--wheat);
+}
+.blog-portada h1 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(38px, 5.4vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -0.005em;
+  margin: 0 0 18px;
+  max-width: 17ch;
+}
+.blog-portada p {
+  margin: 0;
+  max-width: 54ch;
+  font-size: 16px;
+  line-height: 1.66;
+  color: rgba(250, 247, 239, 0.8);
+}
+.blog-caido {
+  padding: clamp(60px, 9vw, 120px) 0;
+  max-width: 52ch;
+}
+.blog-caido h2 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(26px, 3.4vw, 40px);
+  line-height: 1.1;
+  margin: 0 0 14px;
+}
+.blog-caido p {
+  margin: 0 0 26px;
+  font-size: 16px;
+  line-height: 1.66;
+  color: rgba(35, 40, 31, 0.75);
+}
+
+.blog-cuerpo {
+  padding: clamp(44px, 6vw, 80px) 0 clamp(70px, 9vw, 120px);
+}
+.blog-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: clamp(26px, 3vw, 42px);
+  margin-top: clamp(34px, 4vw, 56px);
+}
+
+/* ---------- blog: una nota en el listado ---------- */
+.nota-card-link {
+  display: block;
+  text-decoration: none;
+}
+.nota-card-foto .photo {
+  aspect-ratio: 4 / 3;
+}
+.nota-card:hover .photo-media img {
+  transform: scale(1.04);
+}
+/* mientras una nota no tenga foto, su inicial sobre el fondo de la casa */
+.nota-sinfoto {
+  aspect-ratio: 4 / 3;
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nota-sinfoto span {
+  font-family: var(--ff-display);
+  font-size: clamp(46px, 6vw, 74px);
+  color: rgba(35, 40, 31, 0.18);
+}
+.nota-card-cuerpo {
+  padding-top: 18px;
+}
+.nota-fecha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 10px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.55);
+}
+.nota-fecha span::before {
+  content: "·";
+  margin-right: 12px;
+}
+.nota-card-cuerpo h3 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(23px, 2.4vw, 30px);
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+.nota-card-bajada {
+  margin: 0 0 14px;
+  font-size: 15.5px;
+  line-height: 1.62;
+  color: rgba(35, 40, 31, 0.72);
+}
+.nota-card-mas {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--clay);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s ease;
+}
+.nota-card:hover .nota-card-mas {
+  border-bottom-color: var(--clay);
+}
+
+/* la última nota abre el blog: foto grande al lado del texto */
+.nota-card.destacada .nota-card-link {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: clamp(24px, 3.5vw, 54px);
+  align-items: center;
+  padding-bottom: clamp(34px, 4vw, 52px);
+  border-bottom: 1px solid var(--line);
+}
+.nota-card.destacada .nota-card-foto .photo {
+  aspect-ratio: 3 / 2;
+}
+.nota-card.destacada .nota-card-cuerpo {
+  padding-top: 0;
+}
+.nota-card.destacada .nota-card-cuerpo h3 {
+  font-size: clamp(30px, 3.8vw, 50px);
+  line-height: 1.04;
+}
+.nota-card.destacada .nota-card-bajada {
+  font-size: 17px;
+  max-width: 46ch;
+}
+
+/* ---------- blog: la nota ---------- */
+/* Es la única página del sitio que arranca en papel y no sobre una foto o una
+   banda oscura, así que la barra de navegación —que hasta que se scrollea se
+   pinta clara, para leerse sobre la foto del hero— acá tiene que nacer en
+   tinta. */
+body:has(.nota-portada) header.site:not(.scrolled) .logo,
+body:has(.nota-portada) header.site:not(.scrolled) nav.links a {
+  color: var(--ink);
+}
+body:has(.nota-portada) header.site:not(.scrolled) nav.links a.cta {
+  border-color: var(--ink);
+}
+body:has(.nota-portada) header.site:not(.scrolled) .nav-toggle span {
+  background: var(--ink);
+}
+
+/* la nota se lee en una medida más angosta que el resto del sitio */
+.nota .wrap {
+  max-width: 1000px;
+}
+.nota-portada {
+  padding: clamp(116px, 13vw, 160px) 0 clamp(26px, 3vw, 40px);
+}
+.nota-portada .eyebrow a {
+  text-decoration: none;
+}
+.nota-portada h1 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(34px, 5vw, 64px);
+  line-height: 1.03;
+  letter-spacing: -0.005em;
+  margin: 0 0 18px;
+  max-width: 20ch;
+}
+.nota-bajada {
+  margin: 0 0 22px;
+  max-width: 58ch;
+  font-family: var(--ff-display);
+  font-size: clamp(20px, 2.2vw, 26px);
+  line-height: 1.4;
+  color: rgba(35, 40, 31, 0.8);
+}
+.nota-firma {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.55);
+}
+.nota-firma span::before {
+  content: "·";
+  margin-right: 12px;
+}
+.nota-foto {
+  aspect-ratio: 16 / 9;
+  margin: clamp(26px, 3vw, 44px) 0 clamp(34px, 4vw, 58px);
+}
+
+/* la columna de lectura: angosta a propósito, que es lo que la hace legible */
+.nota-cuerpo {
+  max-width: 68ch;
+}
+.nota-cuerpo p {
+  margin: 0 0 26px;
+  font-size: 17.5px;
+  line-height: 1.75;
+  color: rgba(35, 40, 31, 0.86);
+}
+.nota-cuerpo h2 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.12;
+  margin: 44px 0 16px;
+}
+.nota-cuerpo blockquote {
+  margin: 36px 0;
+  padding-left: clamp(18px, 2.5vw, 30px);
+  border-left: 2px solid var(--clay);
+  font-family: var(--ff-display);
+  font-size: clamp(21px, 2.4vw, 28px);
+  line-height: 1.36;
+}
+.nota-cuerpo a {
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+}
+.nota-pie {
+  max-width: 68ch;
+  margin-top: clamp(40px, 5vw, 64px);
+  padding-top: clamp(26px, 3vw, 40px);
+  border-top: 1px solid var(--line);
+}
+.blog-otras {
+  border-top: 1px solid var(--line);
+  padding-top: clamp(50px, 6vw, 84px);
+}
+.blog-otras .section-title {
+  font-size: clamp(28px, 3.4vw, 44px);
+}
+
 /* ---------- footer ---------- */
 footer {
   padding: 56px 0 40px;
@@ -2328,6 +2587,17 @@ footer .fine {
   .eventos-head,
   .hscroll-head {
     grid-template-columns: 1fr;
+  }
+  /* la nota destacada deja de ser dos columnas y se lee como las otras */
+  .nota-card.destacada .nota-card-link {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .nota-card.destacada .nota-card-cuerpo {
+    padding-top: 18px;
+  }
+  .nota-foto {
+    aspect-ratio: 4 / 3;
   }
   .mosaic,
   .platos-grid {
@@ -2905,6 +3175,42 @@ footer .fine {
 }
 .admin-estado.escondido {
   color: rgba(35, 40, 31, 0.5);
+}
+
+/* ---------- blog: el listado y el formulario ---------- */
+/* una nota publicada está afuera, una programada espera y un borrador duerme */
+.admin-estado.nota-publicada {
+  color: var(--moss-deep);
+  border-color: rgba(73, 87, 60, 0.45);
+  background: rgba(73, 87, 60, 0.1);
+}
+.admin-estado.nota-programada {
+  color: #7a5b0f;
+  border-color: rgba(201, 162, 39, 0.5);
+  background: rgba(201, 162, 39, 0.14);
+}
+.admin-estado.nota-borrador {
+  color: rgba(35, 40, 31, 0.5);
+}
+/* la bajada de una nota es más larga que la de un producto, y la primera
+   columna de la tabla no parte renglones: se corta con puntos suspensivos */
+.admin-blog-sub {
+  max-width: 52ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* el título de una nota se escribe en grande: es lo que va a leerse en grande */
+.admin-form input.admin-titulo-nota {
+  font-family: var(--ff-display);
+  font-size: 26px;
+  padding: 12px;
+}
+/* el cuerpo es la mitad del panel: se le da altura y una medida de lectura */
+.admin-form textarea.admin-cuerpo {
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 380px;
+  padding: 16px;
 }
 
 /* ---------- catálogo: los formularios ---------- */
