@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { AdminAviso, FaltaSecretKey } from "@/components/admin/AdminAviso";
 import { BorrarNota } from "@/components/admin/BorrarNota";
 import { NotaForm } from "@/components/admin/NotaForm";
-import { estadoDeNota } from "@/lib/blog";
-import { buscarNota, type Nota } from "@/lib/db";
+import { estadoDeNota, etiquetasDe } from "@/lib/blog";
+import { buscarNota, listarNotasDelPanel, type Nota } from "@/lib/db";
 import { fechaHora, paraElReloj } from "@/lib/fechas";
 import { fotosDisponibles } from "@/lib/photos";
 import { hayClaveDeAdmin } from "@/lib/supabase";
@@ -16,8 +16,11 @@ export default async function NotaPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
 
   let nota: Nota | null;
+  let usadas: string[] = [];
   try {
-    nota = await buscarNota(id);
+    const [suya, todas] = await Promise.all([buscarNota(id), listarNotasDelPanel()]);
+    nota = suya;
+    usadas = etiquetasDe(todas);
   } catch (error) {
     console.error("No se pudo leer la nota", error);
     return (
@@ -52,7 +55,12 @@ export default async function NotaPage({ params }: { params: Promise<{ id: strin
         </p>
       </header>
 
-      <NotaForm nota={nota} fotos={fotosDisponibles()} fecha={paraElReloj(nota.fecha)} />
+      <NotaForm
+        nota={nota}
+        fotos={fotosDisponibles()}
+        usadas={usadas}
+        fecha={paraElReloj(nota.fecha)}
+      />
 
       <section className="admin-bloque admin-baja">
         <div className="admin-bloque-head">

@@ -1,41 +1,52 @@
 "use client";
 
 import { useActionState, useId, useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { guardarNota } from "@/app/admin/acciones";
 import {
   MAX_AUTOR,
   MAX_BAJADA,
   MAX_CUERPO,
-  MAX_SLUG,
+  MAX_ETIQUETAS,
   MAX_TITULO,
+  estadoDeNota,
+  etiquetasComoTexto,
+  etiquetasDesdeTexto,
   minutosDeLectura,
   slugDeTitulo,
 } from "@/lib/blog";
 import type { Nota } from "@/lib/db";
 import type { FotoDisponible } from "@/lib/photos";
+import { SelectorDeFoto } from "./SelectorDeFoto";
 
 /**
  * El formulario de una nota, el mismo para una nueva y para una que ya está.
  *
  * Todo es estado del cliente —no `defaultValue`— por las mismas dos razones que
- * en el formulario de un producto: hay campos que dependen de lo escrito (el
- * slug sale del título, el pie cambia según la fecha) y si el guardado falla no
- * se pierde nada de lo redactado, que acá puede ser media hora de trabajo.
+ * en el formulario de un producto: hay campos que dependen de lo escrito (la
+ * dirección sale del título, el pie cambia según la fecha) y si el guardado
+ * falla no se pierde nada de lo redactado, que acá puede ser media hora de
+ * trabajo.
  *
  * La fecha es la pieza que hace todo: es la que se lee al pie del título y es
  * cuándo sale. Puesta más adelante, con la nota publicada, queda programada y
  * aparece sola cuando llega el día.
+ *
+ * La dirección no se escribe. Sale del título —acá se muestra cómo va a
+ * quedar— y la resuelve la action, que es la única que sabe si esa URL ya está
+ * tomada por otra nota.
  */
 export function NotaForm({
   nota,
   fotos,
+  usadas,
   fecha: fechaInicial,
 }: {
   /** La nota que se está editando, o null si es nueva. */
   nota: Nota | null;
   fotos: FotoDisponible[];
+  /** Las etiquetas que ya se usaron en el blog, para no reinventarlas. */
+  usadas: string[];
   /**
    * Con qué fecha abre el campo, ya en hora de Los Cardales
    * ("2026-08-21T14:35"): la de la nota, o ahora si es nueva. La pasa la página
@@ -47,25 +58,18 @@ export function NotaForm({
   const id = useId();
 
   const [titulo, setTitulo] = useState(nota?.titulo ?? "");
-  const [slug, setSlug] = useState(nota?.slug ?? "");
-  // una nota que ya está no se le vuelve a tocar la URL sola: la tiene ganada
-  const [slugAMano, setSlugAMano] = useState(Boolean(nota));
   const [bajada, setBajada] = useState(nota?.bajada ?? "");
   const [cuerpo, setCuerpo] = useState(nota?.cuerpo ?? "");
   const [autor, setAutor] = useState(nota?.autor ?? "");
-  const [foto, setFoto] = useState(nota?.foto ?? "");
+  const [etiquetas, setEtiquetas] = useState(etiquetasComoTexto(nota?.etiquetas ?? []));
   const [fecha, setFecha] = useState(fechaInicial);
   const [publicada, setPublicada] = useState(nota ? nota.publicada : false);
 
-  const elegida = fotos.find((f) => f.clave === foto);
-  const areas = useMemo(() => {
-    const grupos = new Map<string, FotoDisponible[]>();
-    for (const disponible of fotos) {
-      const area = disponible.clave.split("/")[0];
-      grupos.set(area, [...(grupos.get(area) ?? []), disponible]);
-    }
-    return [...grupos];
-  }, [fotos]);
+  // una nota que ya salió se queda con la dirección que tiene, le cambien el
+  // título o no: es el link que puede haber guardado alguien
+  const salida = nota ? estadoDeNota(nota) === "publicada" : false;
+  const direccion = salida ? nota!.slug : slugDeTitulo(titulo);
+  const puestas = useMemo(() => etiquetasDesdeTexto(etiquetas), [etiquetas]);
 
   // el reloj del navegador alcanza para el aviso: la cuenta fina la hace el
   // server, que es el que compara contra la fecha guardada
@@ -76,11 +80,6 @@ export function NotaForm({
 
   const falla = estado && !estado.ok ? estado : null;
   const mal = (campo: string) => (falla?.campo === campo ? true : undefined);
-
-  function escribirTitulo(valor: string) {
-    setTitulo(valor);
-    if (!slugAMano) setSlug(slugDeTitulo(valor));
-  }
 
   return (
     <form className="admin-form" action={accion}>
@@ -94,31 +93,17 @@ export function NotaForm({
             name="titulo"
             className="admin-titulo-nota"
             value={titulo}
-            onChange={(evento) => escribirTitulo(evento.target.value)}
+            onChange={(evento) => setTitulo(evento.target.value)}
             maxLength={MAX_TITULO}
             placeholder="La primera cosecha de la huerta nueva"
             aria-invalid={mal("titulo")}
             autoFocus={!nota}
           />
-        </p>
-
-        <p className="admin-campo ancho">
-          <label htmlFor={`${id}-slug`}>Dirección</label>
-          <input
-            id={`${id}-slug`}
-            name="slug"
-            value={slug}
-            onChange={(evento) => {
-              setSlugAMano(true);
-              setSlug(evento.target.value);
-            }}
-            maxLength={MAX_SLUG}
-            placeholder="la-primera-cosecha"
-            aria-invalid={mal("slug")}
-          />
           <small>
-            La nota vive en <code>/blog/{slug || "…"}</code>. Sale sola del título; una vez
-            publicada conviene no tocarla, porque es el link que quedó dando vueltas.
+            La nota va a vivir en <code>/blog/{direccion || "…"}</code>
+            {salida
+              ? ", y ahí se queda: ya salió, y esa dirección puede estar guardada en cualquier lado."
+              : ". La dirección sale del título, no hay que escribirla."}
           </small>
         </p>
 
@@ -150,12 +135,15 @@ export function NotaForm({
             onChange={(evento) => setCuerpo(evento.target.value)}
             maxLength={MAX_CUERPO}
             rows={18}
-            placeholder={"Un renglón en blanco separa los párrafos.\n\n## Un subtítulo se escribe así\n\n> Y una cita, así."}
+            placeholder={
+              "Un renglón en blanco separa los párrafos.\n\n## Un subtítulo se escribe así\n\n- una lista\n- se escribe así\n\n> Y una cita, así."
+            }
             aria-invalid={mal("cuerpo")}
           />
           <small>
-            Un renglón en blanco separa párrafos, <code>##</code> al principio hace un subtítulo y{" "}
-            <code>&gt;</code> una cita. {cuerpo.trim() ? `${minutosDeLectura(cuerpo)} min de lectura · ` : ""}
+            Un renglón en blanco separa párrafos, <code>##</code> al principio hace un subtítulo,{" "}
+            <code>-</code> una lista, <code>1.</code> una lista numerada y <code>&gt;</code> una
+            cita. {cuerpo.trim() ? `${minutosDeLectura(cuerpo)} min de lectura · ` : ""}
             {cuerpo.length} de {MAX_CUERPO} caracteres.
           </small>
         </p>
@@ -189,42 +177,44 @@ export function NotaForm({
           </small>
         </p>
 
-        <div className="admin-campo ancho">
-          <label htmlFor={`${id}-foto`}>Foto</label>
-          <div className="admin-foto-fila">
-            <span className="admin-foto-muestra">
-              {elegida ? (
-                <Image src={elegida.src} alt="" fill sizes="120px" />
-              ) : (
-                <em>{titulo.charAt(0) || "—"}</em>
-              )}
+        <p className="admin-campo ancho">
+          <label htmlFor={`${id}-etiquetas`}>Etiquetas</label>
+          <input
+            id={`${id}-etiquetas`}
+            name="etiquetas"
+            value={etiquetas}
+            onChange={(evento) => setEtiquetas(evento.target.value)}
+            placeholder="La Pebeta en tu casa, Recetas"
+            aria-invalid={mal("etiquetas")}
+            list={`${id}-etiquetas-usadas`}
+          />
+          {usadas.length > 0 ? (
+            <datalist id={`${id}-etiquetas-usadas`}>
+              {usadas.map((usada) => (
+                <option key={usada} value={usada} />
+              ))}
+            </datalist>
+          ) : null}
+          <small>
+            Separadas por coma, hasta {MAX_ETIQUETAS}. La primera es la sección en la que va la
+            nota —“La Pebeta en tu casa”, “Huerta en tu casa”, “En La Pebeta”—; las que sigan, sus
+            temas. En el blog se puede filtrar por cualquiera de ellas.
+          </small>
+          {puestas.length > 0 ? (
+            <span className="admin-etiquetas-muestra">
+              {puestas.map((puesta) => (
+                <em key={puesta}>{puesta}</em>
+              ))}
             </span>
-            <span className="admin-foto-select">
-              <select
-                id={`${id}-foto`}
-                name="foto"
-                value={foto}
-                onChange={(evento) => setFoto(evento.target.value)}
-                aria-invalid={mal("foto")}
-              >
-                <option value="">Sin foto</option>
-                {areas.map(([area, delArea]) => (
-                  <optgroup key={area} label={area}>
-                    {delArea.map((disponible) => (
-                      <option key={disponible.clave} value={disponible.clave}>
-                        {disponible.clave}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-              <small>
-                Es la foto que abre la nota y la que se ve en el listado. Salen de{" "}
-                <code>public/imgs/</code>: para sumar una, corré el script de imágenes y volvé acá.
-              </small>
-            </span>
-          </div>
-        </div>
+          ) : null}
+        </p>
+
+        <SelectorDeFoto
+          fotos={fotos}
+          inicial={nota?.foto ?? ""}
+          letra={titulo.charAt(0)}
+          invalida={mal("foto")}
+        />
 
         <label className="admin-check ancho">
           <input

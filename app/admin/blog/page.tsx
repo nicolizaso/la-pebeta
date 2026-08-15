@@ -4,7 +4,7 @@ import { AdminAviso, FaltaSecretKey } from "@/components/admin/AdminAviso";
 import { estadoDeNota, resumenDe, type EstadoNota } from "@/lib/blog";
 import { listarNotasDelPanel, type Nota } from "@/lib/db";
 import { fechaHora } from "@/lib/fechas";
-import { buscarFoto } from "@/lib/photos";
+import { fotoDeNota } from "@/lib/photos";
 import { hayClaveDeAdmin } from "@/lib/supabase";
 import { normalizar } from "@/lib/tienda";
 import { cambiarPublicacionNota } from "../acciones";
@@ -46,7 +46,9 @@ function recortar(notas: Nota[], { q }: Params): Nota[] {
   if (!buscado) return notas;
 
   return notas.filter((nota) => {
-    const donde = normalizar(`${nota.titulo} ${nota.bajada} ${nota.autor} ${nota.cuerpo}`);
+    const donde = normalizar(
+      `${nota.titulo} ${nota.bajada} ${nota.autor} ${nota.etiquetas.join(" ")} ${nota.cuerpo}`
+    );
     return buscado.split(/\s+/).every((palabra) => donde.includes(palabra));
   });
 }
@@ -184,7 +186,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
               </thead>
               <tbody>
                 {visibles.map(({ nota, estado: suEstado }) => {
-                  const imagen = buscarFoto(nota.foto);
+                  const imagen = fotoDeNota(nota.foto);
                   return (
                     <tr key={nota.id} className={suEstado === "borrador" ? "apagada" : ""}>
                       <td>
@@ -196,7 +198,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                                 alt=""
                                 fill
                                 sizes="56px"
-                                placeholder="blur"
+                                placeholder={imagen.blurDataURL ? "blur" : "empty"}
                                 blurDataURL={imagen.blurDataURL}
                               />
                             ) : (
@@ -208,6 +210,13 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
                             <span className="admin-sub admin-blog-sub">
                               {resumenDe(nota) || "Sin bajada"}
                             </span>
+                            {nota.etiquetas.length > 0 ? (
+                              <span className="admin-etiquetas">
+                                {nota.etiquetas.map((etiqueta) => (
+                                  <em key={etiqueta}>{etiqueta}</em>
+                                ))}
+                              </span>
+                            ) : null}
                           </span>
                         </div>
                       </td>

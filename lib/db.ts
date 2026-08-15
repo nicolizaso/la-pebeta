@@ -119,7 +119,15 @@ export type Nota = {
   /** El texto, en párrafos separados por un renglón en blanco. */
   cuerpo: string;
   autor: string;
-  /** Clave del manifiesto de fotos ("huerta/17"), o vacía si no tiene. */
+  /**
+   * La sección en la que va la nota y sus temas: la primera etiqueta es la
+   * sección ("Huerta en tu casa") y las demás, temas sueltos.
+   */
+  etiquetas: string[];
+  /**
+   * Clave del manifiesto de fotos ("huerta/17"), la URL de una foto subida
+   * desde el panel, o vacía si no tiene.
+   */
   foto: string;
   /** ¿Está para salir? Sin esto no se ve, tenga la fecha que tenga. */
   publicada: boolean;
@@ -136,6 +144,7 @@ export type DatosNota = {
   bajada: string;
   cuerpo: string;
   autor: string;
+  etiquetas: string[];
   foto: string;
   publicada: boolean;
   fecha: string;
@@ -423,17 +432,28 @@ export async function buscarNota(id: string): Promise<Nota | null> {
 }
 
 /**
- * ¿Hay otra nota con ese slug? El slug es la URL de la nota, así que no se
- * puede repetir; la tabla lo impide igual, pero el panel prefiere decirlo con
- * palabras antes de mandar.
+ * La dirección libre más parecida a la que pide el título. Dos notas que se
+ * llamen igual no pueden compartir URL, así que la segunda queda en
+ * `la-primera-cosecha-2`. Nadie escribe esto a mano: sale del título.
  */
-export async function slugOcupado(slug: string, exceptoId = ""): Promise<boolean> {
-  let consulta = supabaseAdmin().from(TABLAS.notas).select("id").eq("slug", slug);
+export async function slugLibre(base: string, exceptoId = ""): Promise<string> {
+  let consulta = supabaseAdmin().from(TABLAS.notas).select("slug").like("slug", `${base}%`);
   if (exceptoId) consulta = consulta.neq("id", exceptoId);
 
-  const { data, error } = await consulta.limit(1);
-  if (error) throw new Error(`No se pudo revisar el slug: ${error.message}`);
-  return (data ?? []).length > 0;
+  const { data, error } = await consulta;
+  if (error) throw new Error(`No se pudo revisar la dirección: ${error.message}`);
+
+  const tomadas = new Set((data ?? []).map((fila) => (fila as { slug: string }).slug));
+  if (!tomadas.has(base)) return base;
+
+  // el sufijo tiene que entrar en los 80 caracteres que admite la columna
+  const raiz = base.slice(0, 76).replace(/-+$/g, "");
+  for (let numero = 2; numero < 1000; numero += 1) {
+    const intento = `${raiz}-${numero}`;
+    if (!tomadas.has(intento)) return intento;
+  }
+
+  return `${raiz}-${Date.now().toString(36)}`;
 }
 
 /** Agrega una nota y devuelve el id con el que quedó guardada. */

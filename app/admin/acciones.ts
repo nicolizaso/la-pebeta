@@ -3,13 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { abrirSesion, cerrarSesion, haySesion } from "@/lib/admin";
-import { validarNota } from "@/lib/blog";
+import { estadoDeNota, etiquetasDesdeTexto, slugDeTitulo, validarNota } from "@/lib/blog";
 import {
   actualizarNota,
   actualizarProducto,
   borrarCategoria,
   borrarNota,
   borrarProducto,
+  buscarNota,
   cambiarEstadoCompra,
   cambiarEstadoReserva,
   contarProductosDe,
@@ -20,10 +21,11 @@ import {
   listarCategoriasDelPanel,
   publicarNota,
   publicarProducto,
-  slugOcupado,
+  slugLibre,
   type Categoria,
   type CompraEstado,
   type Horario,
+  type Nota,
   type ReservaEstado,
 } from "@/lib/db";
 import { desdeElReloj } from "@/lib/fechas";
@@ -36,6 +38,7 @@ import {
   validarCategoria,
   validarProducto,
 } from "@/lib/productos";
+import { subirImagen } from "@/lib/subidas";
 
 /**
  * Todo lo que el panel escribe pasa por acá.
@@ -352,6 +355,11 @@ function seTocoElBlog(): void {
  * Cardales y no como la del server, que en Vercel está en UTC. Con la fecha por
  * venir y la nota publicada, queda programada: no hay nada más que hacer, sale
  * sola cuando llega el día.
+ *
+ * La dirección no se escribe: sale del título. Mientras la nota no haya salido
+ * la sigue —cambiar el título de un borrador le cambia la URL, que todavía no
+ * la tiene nadie—, y desde que se publicó queda quieta, porque a partir de ahí
+ * es un link que puede estar guardado en cualquier lado.
  */
 export async function guardarNota(_previo: Respuesta, datos: FormData): Promise<Respuesta> {
   if (!(await haySesion())) return SIN_SESION;
@@ -362,14 +370,29 @@ export async function guardarNota(_previo: Respuesta, datos: FormData): Promise<
     return { ok: false, mensaje: "Elegí cuándo sale la nota: día y hora.", campo: "fecha" };
   }
 
+  const titulo = texto(datos.get("titulo"));
+  let anterior: Nota | null = null;
+  let slug: string;
+  try {
+    anterior = id ? await buscarNota(id) : null;
+    slug =
+      anterior && estadoDeNota(anterior) === "publicada"
+        ? anterior.slug
+        : await slugLibre(slugDeTitulo(titulo), id);
+  } catch (error) {
+    console.error("No se pudo resolver la dirección de la nota", error);
+    return { ok: false, mensaje: "No pudimos guardar la nota. Probá de nuevo." };
+  }
+
   const validacion = validarNota(
     {
-      titulo: texto(datos.get("titulo")),
-      slug: texto(datos.get("slug")),
+      titulo,
+      slug,
       bajada: texto(datos.get("bajada")),
       // el cuerpo conserva sus renglones: es lo único que no se aplana
       cuerpo: typeof datos.get("cuerpo") === "string" ? String(datos.get("cuerpo")) : "",
       autor: texto(datos.get("autor")),
+      etiquetas: etiquetasDesdeTexto(texto(datos.get("etiquetas"))),
       foto: texto(datos.get("foto")),
       publicada: datos.get("publicada") === "on",
       fecha,
@@ -382,14 +405,6 @@ export async function guardarNota(_previo: Respuesta, datos: FormData): Promise<
 
   let guardada = id;
   try {
-    if (await slugOcupado(validacion.datos.slug, id)) {
-      return {
-        ok: false,
-        mensaje: `Ya hay una nota en /blog/${validacion.datos.slug}. Cambiale la dirección a ésta.`,
-        campo: "slug",
-      };
-    }
-
     if (id) await actualizarNota(id, validacion.datos);
     else guardada = await crearNota(validacion.datos);
   } catch (error) {
@@ -413,6 +428,24 @@ export async function cambiarPublicacionNota(datos: FormData): Promise<void> {
   await publicarNota(id, texto(datos.get("publicada")) === "si");
   seTocoElBlog();
   revalidatePath(`/blog/${texto(datos.get("slug"))}`);
+}
+
+export type Subida = { ok: true; url: string } | { ok: false; error: string };
+
+/**
+ * La foto que alguien elige del teléfono o de la computadora mientras escribe
+ * una nota. Va al bucket y vuelve como URL, que es lo que se guarda en la nota:
+ * el formulario nunca manda el archivo dos veces.
+ */
+export async function subirFotoDeNota(datos: FormData): Promise<Subida> {
+  if (!(await haySesion())) {
+    return { ok: false, error: "Se cerró la sesión. Recargá la página y volvé a entrar." };
+  }
+
+  const archivo = datos.get("archivo");
+  if (!(archivo instanceof File)) return { ok: false, error: "No llegó ninguna foto." };
+
+  return subirImagen(archivo);
 }
 
 /** Borrar una nota. Es lo único del blog que no se puede deshacer. */

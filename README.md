@@ -24,10 +24,11 @@ Abrí [http://localhost:3000](http://localhost:3000).
   `/blog`), el panel (`app/admin/`), la API (`app/api/`) y estilos globales.
 - `components/` — una pieza por sección, más `Photo` (la primitiva de imagen), `Lightbox` (visor a pantalla completa) y `SiteAnimations`, que centraliza Lenis + GSAP ScrollTrigger. En `components/admin/` van las del panel, en `components/tienda/` las del catálogo y el carrito y en `components/blog/` las de las notas.
 - `lib/` — `photos.ts` y el manifiesto generado de imágenes, `db.ts` (los tipos
-  y el acceso a la base), `supabase.ts` (la conexión), `reservas.ts`,
-  `horarios.ts`, `tienda.ts`, `productos.ts` y `blog.ts` (las reglas de cada
-  uno), `admin.ts` (la puerta del panel), `fechas.ts`, `contacto.ts` y
-  `smooth-scroll.ts` (el puente para mover la página a través de Lenis).
+  y el acceso a la base), `supabase.ts` (la conexión), `subidas.ts` (las fotos
+  que se suben desde el panel), `reservas.ts`, `horarios.ts`, `tienda.ts`,
+  `productos.ts` y `blog.ts` (las reglas de cada uno), `admin.ts` (la puerta del
+  panel), `fechas.ts`, `contacto.ts` y `smooth-scroll.ts` (el puente para mover
+  la página a través de Lenis).
 - `assets/imgs/` — originales de cámara, ordenados por área. No se sirven: son el archivo del que sale `public/imgs/`.
 - `public/imgs/` — versiones web (WebP redimensionado) generadas por el script.
 - `reference/` — prototipo HTML original usado como base del diseño.
@@ -43,7 +44,12 @@ Los datos viven en Postgres, en Supabase. Son seis tablas:
 | `pebeta_categorias` | Los cajones del catálogo, con el orden en que se listan. No hay una lista fija en el código: se cargan desde el panel y el `id` sale del nombre (`quesos-de-tambo`). |
 | `pebeta_compras` | Las compras de la tienda, con sus ítems, el total y el `estado` (`pagada` / `entregada` / `cancelada`). |
 | `pebeta_horarios` | Los horarios de atención: una fila por área (`proveeduria` / `restaurant`) y día de la semana. |
-| `pebeta_notas` | Las notas del blog: título, `slug` (la URL), bajada, cuerpo, firma, foto, `publicada` y `fecha`, que es cuándo sale y la que lleva la nota. |
+| `pebeta_notas` | Las notas del blog: título, `slug` (la URL), bajada, cuerpo, firma, `etiquetas`, foto, `publicada` y `fecha`, que es cuándo sale y la que lleva la nota. |
+
+Hay además un bucket de Storage, `pebeta-blog`, con las fotos que se suben
+desde el panel para una nota. Es público —lo que guarda se ve en el blog— y
+acepta hasta 5 MB por imagen, en JPG, PNG, WebP o AVIF. Escribir en él necesita
+la secret key, así que sólo puede hacerlo el panel.
 
 Van con prefijo porque, por ahora, comparten proyecto de Supabase con otra app.
 Cuando La Pebeta tenga el suyo, se cambian el prefijo y las variables de
@@ -66,9 +72,9 @@ ella lo decide RLS, y es dejar una reserva —que entra siempre como
 `pendiente`—, dejar una compra —que entra siempre como `pagada` y con al menos
 un ítem—, leer el catálogo publicado con sus categorías, leer los horarios y
 leer las notas del blog que ya salieron. Listar reservas y compras,
-confirmarlas, cancelarlas, marcarlas entregadas, cargar horarios y ver un
-borrador o una nota programada necesita la secret key, que sólo se usa del lado
-del server y sólo desde el panel.
+confirmarlas, cancelarlas, marcarlas entregadas, cargar horarios, subir una
+foto y ver un borrador o una nota programada necesita la secret key, que sólo
+se usa del lado del server y sólo desde el panel.
 
 Las reglas del negocio están dos veces a propósito: en `lib/reservas.ts` y
 `lib/tienda.ts`, que es lo que valida la API, y como constraints de la tabla
@@ -121,8 +127,26 @@ quién compró, qué se lleva y cuánto, y nada más.
 `/blog` es lo que se cuenta de la casa: un listado con la última nota abierta
 arriba y las anteriores en grilla, y `/blog/<slug>` la nota entera. El texto se
 escribe en un textarea, no en un editor: un renglón en blanco separa párrafos,
-`##` al principio hace un subtítulo y `>` una cita. Es todo lo que hay, y es
-suficiente para el tipo de nota que se publica acá.
+`##` al principio hace un subtítulo, `-` una lista, `1.` una lista numerada y
+`>` una cita. Es todo lo que hay, y alcanza para una receta con sus
+ingredientes o para una nota de la huerta.
+
+Cada nota lleva etiquetas. La primera es la sección en la que va —"La Pebeta en
+tu casa", "Huerta en tu casa", "En La Pebeta"— y las demás son sus temas; no
+hay una lista fija en el código, se escriben en el panel y el blog arma sus
+filtros con las que existan, igual que la tienda con sus categorías. Se filtra
+por cualquiera de ellas en `/blog?etiqueta=huerta-en-tu-casa`.
+
+La dirección de una nota no se escribe: sale del título. Mientras es borrador
+la sigue —cambiarle el título le cambia la URL, que todavía no tiene nadie— y
+desde que se publicó queda quieta, porque a partir de ahí es un link que puede
+estar guardado en cualquier lado. Dos títulos iguales tampoco se pisan: el
+segundo queda en `-2`.
+
+La foto puede salir de dos lados: de las fotos del sitio —las de
+`public/imgs/`, que en el panel se eligen de una galería— o del dispositivo de
+quien escribe, que es lo más común cuando la foto se sacó esa misma mañana.
+Esas van al bucket de Supabase y la nota se guarda con su URL.
 
 **Una nota se puede dejar cargada con fecha de más adelante y sale sola ese
 día.** No hay cron, ni cola, ni un deploy que la traiga: `pebeta_notas` guarda
@@ -151,7 +175,7 @@ aside con las secciones y, al lado, la que esté abierta:
 | Compras | Los pedidos de la tienda, lo último primero, con el detalle de cada uno y su total. Entran `pagada`: se marcan entregadas cuando la persona pasó a retirar, o canceladas si no pasó. |
 | Productos | El catálogo entero, publicado o no, con filtros por categoría, estado y buscador. Se carga, se edita, se publica, se esconde y se borra. |
 | Categorías | Los cajones de la tienda: nombre, bajada, orden y si están a la vista. Se puede crear una sin pasar por acá, desde el select del formulario de un producto. |
-| Blog | Las notas: se escriben, se guardan de borrador, se publican, se sacan y se borran, con filtros por estado y buscador. Una nota con fecha de más adelante queda programada y sale sola ese día. |
+| Blog | Las notas: se escriben, se guardan de borrador, se publican, se sacan y se borran, con filtros por estado y buscador. Llevan etiquetas —la primera es su sección—, la dirección sale del título y la foto se sube o se elige de la galería. Una nota con fecha de más adelante queda programada y sale sola ese día. |
 | Horarios | La semana de la proveeduría y la del restaurant, siete renglones cada una, con su nota por día. |
 
 Cargar un producto en una categoría que todavía no existe no obliga a ir a
