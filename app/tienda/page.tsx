@@ -5,7 +5,7 @@ import { Header } from "@/components/Header";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { Tienda } from "@/components/tienda/Tienda";
 import { WHATSAPP } from "@/lib/contacto";
-import { listarCategorias, listarProductos, type Categoria, type Producto } from "@/lib/db";
+import { listarCatalogo, type Categoria, type Producto } from "@/lib/db";
 import { buscarFoto } from "@/lib/photos";
 import type { ProductoVista } from "@/lib/tienda";
 
@@ -42,7 +42,7 @@ export default async function TiendaPage() {
   let fallo = false;
 
   try {
-    [productos, categorias] = await Promise.all([listarProductos(), listarCategorias()]);
+    ({ productos, categorias } = await listarCatalogo());
   } catch (error) {
     console.error("No se pudo leer el catálogo", error);
     fallo = true;

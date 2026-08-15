@@ -1,16 +1,34 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { abrirSesion, cerrarSesion, haySesion } from "@/lib/admin";
 import {
+  actualizarProducto,
+  borrarCategoria,
+  borrarProducto,
   cambiarEstadoCompra,
   cambiarEstadoReserva,
+  contarProductosDe,
+  crearProducto,
+  guardarCategorias,
   guardarHorarios,
+  listarCategoriasDelPanel,
+  publicarProducto,
+  type Categoria,
   type CompraEstado,
   type Horario,
   type ReservaEstado,
 } from "@/lib/db";
 import { DIAS, esHorarioArea, validarSemana } from "@/lib/horarios";
+import { PHOTO_MANIFEST } from "@/lib/photos";
+import {
+  CATEGORIA_NUEVA,
+  proximoOrden,
+  slugDeCategoria,
+  validarCategoria,
+  validarProducto,
+} from "@/lib/productos";
 
 /**
  * Todo lo que el panel escribe pasa por acá.
@@ -19,7 +37,7 @@ import { DIAS, esHorarioArea, validarSemana } from "@/lib/horarios";
  * la sesión: que la página no se haya renderizado no alcanza como permiso.
  */
 
-export type Respuesta = { ok: boolean; mensaje: string } | null;
+export type Respuesta = { ok: boolean; mensaje: string; campo?: string } | null;
 
 const SIN_SESION: Respuesta = {
   ok: false,
@@ -104,4 +122,209 @@ export async function guardarSemana(_previo: Respuesta, datos: FormData): Promis
 
   revalidatePath("/admin/horarios");
   return { ok: true, mensaje: "Horarios guardados." };
+}
+
+/* ---------- el catálogo ---------- */
+
+/** Lo que hay que volver a armar cuando se toca un producto o una categoría. */
+function seTocoElCatalogo(): void {
+  revalidatePath("/admin/productos");
+  revalidatePath("/admin/productos/categorias");
+  revalidatePath("/tienda");
+}
+
+const FOTOS = Object.keys(PHOTO_MANIFEST);
+
+/**
+ * Alta y edición de un producto: el mismo formulario para los dos, con `id`
+ * vacío cuando es nuevo.
+ *
+ * Acá también nacen las categorías. Si el select vino en "nueva", la categoría
+ * se arma con el nombre que se escribió al lado y se da de alta recién cuando el
+ * resto del producto pasó la revisión, así un error en el precio no deja una
+ * categoría vacía dando vueltas. Desde que se guarda está en el aside de la
+ * tienda, en los filtros del panel y en el select del próximo producto, sin
+ * pasar por ninguna otra pantalla.
+ *
+ * Si ya había una que se guardaba con el mismo id —sale del nombre, así que
+ * "Quesos" y "quesos" son la misma— se usa esa en vez de duplicarla, y si estaba
+ * escondida vuelve al catálogo: pedir un producto en una categoría es pedir que
+ * esa categoría esté.
+ */
+export async function guardarProducto(_previo: Respuesta, datos: FormData): Promise<Respuesta> {
+  if (!(await haySesion())) return SIN_SESION;
+
+  const id = texto(datos.get("id"));
+  let categorias: Categoria[];
+  try {
+    categorias = await listarCategoriasDelPanel();
+  } catch (error) {
+    console.error("No se pudieron leer las categorías", error);
+    return { ok: false, mensaje: "No pudimos leer las categorías. Probá de nuevo." };
+  }
+
+  let categoria = texto(datos.get("categoria"));
+  // la que está por nacer: se guarda al final, si todo lo demás está bien
+  let pendiente: Categoria | null = null;
+
+  if (categoria === CATEGORIA_NUEVA) {
+    const nombre = texto(datos.get("categoria-nueva"));
+    const validacion = validarCategoria({
+      id: slugDeCategoria(nombre),
+      nombre,
+      descripcion: texto(datos.get("categoria-nueva-descripcion")),
+      orden: String(proximoOrden(categorias)),
+      activa: true,
+    });
+    if (!validacion.ok) return { ok: false, mensaje: validacion.error, campo: "categoria" };
+
+    pendiente = validacion.categoria;
+    categoria = pendiente.id;
+  }
+
+  const validacion = validarProducto(
+    {
+      nombre: texto(datos.get("nombre")),
+      descripcion: texto(datos.get("descripcion")),
+      precio: texto(datos.get("precio")),
+      unidad: texto(datos.get("unidad")),
+      stock: texto(datos.get("stock")),
+      categoria,
+      foto: texto(datos.get("foto")),
+      activo: datos.get("activo") === "on",
+    },
+    {
+      categorias: categorias.map((c) => c.id).concat(pendiente ? [pendiente.id] : []),
+      fotos: FOTOS,
+    }
+  );
+  if (!validacion.ok) {
+    return { ok: false, mensaje: validacion.error, campo: validacion.campo };
+  }
+
+  let guardado = id;
+  try {
+    if (pendiente) {
+      const nueva = pendiente;
+      const yaEstaba = categorias.find((categoria) => categoria.id === nueva.id);
+      if (!yaEstaba) await guardarCategorias([nueva]);
+      else if (!yaEstaba.activa) await guardarCategorias([{ ...yaEstaba, activa: true }]);
+    }
+
+    if (id) await actualizarProducto(id, validacion.datos);
+    else guardado = await crearProducto(validacion.datos);
+  } catch (error) {
+    console.error("No se pudo guardar el producto", error);
+    return { ok: false, mensaje: "No pudimos guardar el producto. Probá de nuevo." };
+  }
+
+  seTocoElCatalogo();
+  // vuelve al listado con el producto marcado, que es donde se sigue trabajando
+  redirect(`/admin/productos?guardado=${guardado}`);
+}
+
+/** Publicar o esconder un producto desde el listado, sin abrir el formulario. */
+export async function cambiarPublicacion(datos: FormData): Promise<void> {
+  if (!(await haySesion())) return;
+
+  const id = texto(datos.get("id"));
+  if (!id) return;
+
+  await publicarProducto(id, texto(datos.get("activo")) === "si");
+  seTocoElCatalogo();
+}
+
+/** Borrar un producto. Las compras que se lo llevaron no se tocan. */
+export async function eliminarProducto(datos: FormData): Promise<void> {
+  if (!(await haySesion())) return;
+
+  const id = texto(datos.get("id"));
+  if (!id) return;
+
+  await borrarProducto(id);
+  seTocoElCatalogo();
+  redirect("/admin/productos");
+}
+
+/**
+ * La lista de categorías, guardada entera de una vez: nombres, bajadas, orden y
+ * cuáles están en el catálogo, más la que se esté agregando al pie.
+ *
+ * El botón de borrar manda su id en el mismo submit, así que "guardar" y
+ * "borrar esta" son la misma action y el formulario no se parte en siete.
+ */
+export async function guardarLasCategorias(
+  _previo: Respuesta,
+  datos: FormData
+): Promise<Respuesta> {
+  if (!(await haySesion())) return SIN_SESION;
+
+  const borrar = texto(datos.get("borrar"));
+  if (borrar) {
+    try {
+      // la base lo impide igual —los productos apuntan acá—, pero el panel
+      // puede explicar por qué en vez de mostrar un error de Postgres
+      const cuantos = await contarProductosDe(borrar);
+      if (cuantos > 0) {
+        return {
+          ok: false,
+          mensaje: `Esa categoría todavía tiene ${cuantos} ${cuantos === 1 ? "producto" : "productos"}. Movelos a otra o borralos primero.`,
+        };
+      }
+      await borrarCategoria(borrar);
+    } catch (error) {
+      console.error("No se pudo borrar la categoría", error);
+      return { ok: false, mensaje: "No pudimos borrar la categoría. Probá de nuevo." };
+    }
+
+    seTocoElCatalogo();
+    return { ok: true, mensaje: "Categoría borrada." };
+  }
+
+  const lista: Categoria[] = [];
+  for (const valor of datos.getAll("ids")) {
+    const id = typeof valor === "string" ? valor : "";
+    if (!id) continue;
+
+    const validacion = validarCategoria({
+      id,
+      nombre: texto(datos.get(`nombre-${id}`)),
+      descripcion: texto(datos.get(`descripcion-${id}`)),
+      orden: texto(datos.get(`orden-${id}`)),
+      activa: datos.get(`activa-${id}`) === "on",
+    });
+    if (!validacion.ok) return { ok: false, mensaje: validacion.error };
+
+    lista.push(validacion.categoria);
+  }
+
+  const nombreNuevo = texto(datos.get("nueva-nombre"));
+  if (nombreNuevo) {
+    const validacion = validarCategoria({
+      id: slugDeCategoria(nombreNuevo),
+      nombre: nombreNuevo,
+      descripcion: texto(datos.get("nueva-descripcion")),
+      orden: String(proximoOrden(lista)),
+      activa: true,
+    });
+    if (!validacion.ok) return { ok: false, mensaje: validacion.error };
+    if (lista.some((categoria) => categoria.id === validacion.categoria.id)) {
+      return { ok: false, mensaje: `Ya hay una categoría que se llama ${nombreNuevo}.` };
+    }
+
+    lista.push(validacion.categoria);
+  }
+
+  try {
+    await guardarCategorias(lista);
+  } catch (error) {
+    console.error("No se pudieron guardar las categorías", error);
+    return { ok: false, mensaje: "No pudimos guardar las categorías. Probá de nuevo." };
+  }
+
+  seTocoElCatalogo();
+  return {
+    ok: true,
+    mensaje: nombreNuevo ? `Listo: ${nombreNuevo} ya está en el catálogo.` : "Categorías guardadas.",
+  };
 }

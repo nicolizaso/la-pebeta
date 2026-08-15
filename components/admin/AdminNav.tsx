@@ -12,6 +12,7 @@ const SECCIONES = [
   { href: "/admin", etiqueta: "Resumen", detalle: "Lo que viene" },
   { href: "/admin/reservas", etiqueta: "Reservas", detalle: "Paseos y mesas" },
   { href: "/admin/compras", etiqueta: "Compras", detalle: "Pedidos de la tienda" },
+  { href: "/admin/productos", etiqueta: "Productos", detalle: "Catálogo de la tienda" },
   { href: "/admin/horarios", etiqueta: "Horarios", detalle: "Proveeduría y restaurant" },
 ];
 

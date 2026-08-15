@@ -2796,6 +2796,7 @@ footer .fine {
   flex-wrap: wrap;
 }
 .admin-btn {
+  display: inline-block;
   font-family: var(--ff-mono);
   font-size: 10px;
   letter-spacing: 0.07em;
@@ -2804,6 +2805,7 @@ footer .fine {
   background: var(--ink);
   color: var(--paper-light);
   border: 1px solid var(--ink);
+  text-decoration: none;
   cursor: pointer;
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
@@ -2819,6 +2821,317 @@ footer .fine {
 .admin-btn.suave:hover {
   border-color: var(--ink);
   color: var(--ink);
+}
+.admin-btn[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.admin-btn.suave[disabled]:hover {
+  border-color: var(--line);
+  color: rgba(35, 40, 31, 0.65);
+}
+
+/* ---------- catálogo: el listado ---------- */
+/* el título a la izquierda y "nuevo producto" contra el margen derecho */
+.admin-head-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.admin-head-fila h1 {
+  margin-bottom: 0;
+}
+.admin-head .eyebrow a {
+  border: 0;
+  color: inherit;
+}
+.admin-buscador {
+  display: flex;
+  gap: 8px;
+}
+.admin-buscador input {
+  font-family: var(--ff-body);
+  font-size: 13.5px;
+  color: var(--ink);
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 8px 11px;
+  width: 210px;
+}
+.admin-buscador input:hover,
+.admin-buscador input:focus {
+  border-color: rgba(35, 40, 31, 0.34);
+}
+
+/* la miniatura del producto dentro de su renglón */
+.admin-producto {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 260px;
+}
+.admin-producto-foto {
+  position: relative;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.admin-producto-foto img {
+  object-fit: cover;
+}
+.admin-producto-foto em {
+  font-family: var(--ff-display);
+  font-style: normal;
+  font-size: 22px;
+  color: rgba(35, 40, 31, 0.35);
+}
+.admin-producto .admin-sub {
+  max-width: 32ch;
+}
+.admin-estado.publicado {
+  color: var(--moss-deep);
+  border-color: rgba(73, 87, 60, 0.45);
+  background: rgba(73, 87, 60, 0.1);
+}
+.admin-estado.escondido {
+  color: rgba(35, 40, 31, 0.5);
+}
+
+/* ---------- catálogo: los formularios ---------- */
+.admin-form {
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  padding: clamp(20px, 3vw, 30px);
+  margin-bottom: 26px;
+}
+.admin-form-grilla {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px 18px;
+  margin-bottom: 24px;
+}
+.admin-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+}
+.admin-campo.ancho,
+.admin-check.ancho {
+  grid-column: 1 / -1;
+}
+.admin-campo label,
+.admin-fila-orden span {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.6);
+}
+.admin-form input,
+.admin-form textarea,
+.admin-form select {
+  font-family: var(--ff-body);
+  font-size: 14.5px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 10px 12px;
+  width: 100%;
+  transition: border-color 0.25s ease;
+}
+.admin-form textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+.admin-form input:hover,
+.admin-form textarea:hover,
+.admin-form select:hover {
+  border-color: rgba(35, 40, 31, 0.34);
+}
+.admin-form [aria-invalid="true"] {
+  border-color: var(--clay);
+}
+.admin-campo small,
+.admin-fila-pie,
+.admin-nueva-pie {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  color: rgba(35, 40, 31, 0.5);
+}
+.admin-campo small code,
+.admin-fila-pie code,
+.admin-nueva-pie code {
+  background: rgba(35, 40, 31, 0.08);
+  padding: 1px 4px;
+}
+
+/* la categoría que se inventa acá mismo, colgando del select */
+.admin-nueva-categoria {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 14px;
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+.admin-nueva-pie {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.admin-nueva-pie a {
+  color: inherit;
+}
+
+.admin-foto-fila {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.admin-foto-muestra {
+  position: relative;
+  flex: none;
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.admin-foto-muestra img {
+  object-fit: cover;
+}
+.admin-foto-muestra em {
+  font-family: var(--ff-display);
+  font-style: normal;
+  font-size: 34px;
+  color: rgba(35, 40, 31, 0.3);
+}
+.admin-foto-select {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14.5px;
+  cursor: pointer;
+}
+.admin-check input {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-top: 2px;
+  accent-color: var(--moss);
+  cursor: pointer;
+}
+.admin-check span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.admin-check small {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: rgba(35, 40, 31, 0.5);
+}
+
+.admin-form-pie {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.admin-form-pie .btn {
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  cursor: pointer;
+}
+.admin-form-pie .btn[disabled] {
+  opacity: 0.55;
+  cursor: progress;
+}
+.admin-form-msg {
+  margin: 0;
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+
+/* ---------- catálogo: las categorías ---------- */
+.admin-filas {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0;
+}
+.admin-fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px 140px auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.admin-fila:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.admin-fila.apagada {
+  opacity: 0.55;
+}
+.admin-fila-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.admin-form input.admin-fila-nombre {
+  font-size: 16px;
+}
+.admin-fila-pie a {
+  color: inherit;
+}
+.admin-fila-orden {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  cursor: pointer;
+}
+/* la fila de agregar no tiene orden, tilde ni botón: sólo sus dos campos */
+.admin-fila-nueva {
+  grid-template-columns: 1fr;
+}
+
+/* la baja definitiva, al pie de la ficha de un producto */
+.admin-baja p {
+  margin: 14px 0 18px;
+  max-width: 68ch;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(35, 40, 31, 0.72);
 }
 
 /* ---------- horarios ---------- */
@@ -3088,5 +3401,22 @@ footer .fine {
   .admin-dia {
     grid-template-columns: 1fr;
     gap: 10px;
+  }
+  /* los formularios del catálogo pasan a una columna, y la fila de una
+     categoría apila sus campos con el orden y la tilde debajo */
+  .admin-form-grilla,
+  .admin-nueva-categoria,
+  .admin-fila {
+    grid-template-columns: 1fr;
+  }
+  .admin-fila {
+    gap: 12px;
+    justify-items: start;
+  }
+  .admin-buscador input {
+    width: 100%;
+  }
+  .admin-buscador {
+    flex: 1 1 220px;
   }
 }
