@@ -7,10 +7,10 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { NotaCard } from "@/components/blog/NotaCard";
-import { bloquesDelCuerpo, minutosDeLectura, resumenDe } from "@/lib/blog";
+import { bloquesDelCuerpo, minutosDeLectura, resumenDe, slugDeEtiqueta } from "@/lib/blog";
 import { buscarNotaPublicada, listarNotas, type Nota } from "@/lib/db";
 import { fechaDelDia } from "@/lib/fechas";
-import { buscarFoto } from "@/lib/photos";
+import { fotoDeNota } from "@/lib/photos";
 
 /**
  * Una nota del blog.
@@ -54,7 +54,7 @@ export default async function NotaPage({ params }: { params: Promise<{ slug: str
   const nota = await laNota(slug);
   if (!nota) notFound();
 
-  const imagen = buscarFoto(nota.foto);
+  const imagen = fotoDeNota(nota.foto);
   const bloques = bloquesDelCuerpo(nota.cuerpo);
 
   let otras: Nota[] = [];
@@ -75,6 +75,11 @@ export default async function NotaPage({ params }: { params: Promise<{ slug: str
             <div className="wrap">
               <div className="eyebrow reveal">
                 <Link href="/blog">Blog</Link>
+                {nota.etiquetas[0] ? (
+                  <Link href={`/blog?etiqueta=${slugDeEtiqueta(nota.etiquetas[0])}`}>
+                    {nota.etiquetas[0]}
+                  </Link>
+                ) : null}
               </div>
               <h1 className="reveal">{nota.titulo}</h1>
               {nota.bajada ? <p className="nota-bajada reveal">{nota.bajada}</p> : null}
@@ -95,7 +100,7 @@ export default async function NotaPage({ params }: { params: Promise<{ slug: str
                     alt={nota.titulo}
                     fill
                     sizes="(max-width: 1000px) 92vw, 1000px"
-                    placeholder="blur"
+                    placeholder={imagen.blurDataURL ? "blur" : "empty"}
                     blurDataURL={imagen.blurDataURL}
                     priority
                   />
@@ -106,24 +111,49 @@ export default async function NotaPage({ params }: { params: Promise<{ slug: str
 
           <div className="wrap">
             <div className="nota-cuerpo">
-              {bloques.map((bloque, indice) =>
-                bloque.tipo === "subtitulo" ? (
-                  <h2 key={indice} className="reveal">
-                    {bloque.texto}
-                  </h2>
-                ) : bloque.tipo === "cita" ? (
-                  <blockquote key={indice} className="reveal">
-                    {bloque.texto}
-                  </blockquote>
-                ) : (
+              {bloques.map((bloque, indice) => {
+                if (bloque.tipo === "subtitulo") {
+                  return (
+                    <h2 key={indice} className="reveal">
+                      {bloque.texto}
+                    </h2>
+                  );
+                }
+                if (bloque.tipo === "cita") {
+                  return (
+                    <blockquote key={indice} className="reveal">
+                      {bloque.texto}
+                    </blockquote>
+                  );
+                }
+                if (bloque.tipo === "lista") {
+                  const Lista = bloque.ordenada ? "ol" : "ul";
+                  return (
+                    <Lista key={indice} className="reveal">
+                      {bloque.items.map((item, cual) => (
+                        <li key={cual}>{item}</li>
+                      ))}
+                    </Lista>
+                  );
+                }
+                return (
                   <p key={indice} className="reveal">
                     {bloque.texto}
                   </p>
-                )
-              )}
+                );
+              })}
             </div>
 
             <div className="nota-pie">
+              {nota.etiquetas.length > 0 ? (
+                <p className="nota-etiquetas">
+                  {nota.etiquetas.map((etiqueta) => (
+                    <Link key={etiqueta} href={`/blog?etiqueta=${slugDeEtiqueta(etiqueta)}`}>
+                      {etiqueta}
+                    </Link>
+                  ))}
+                </p>
+              ) : null}
               <Link href="/blog" className="btn ghost">
                 Volver al blog
               </Link>

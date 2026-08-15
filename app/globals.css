@@ -2122,6 +2122,36 @@ h2.section-title {
   margin-top: clamp(34px, 4vw, 56px);
 }
 
+/* las secciones del blog: son las etiquetas de las notas que hay */
+.blog-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: clamp(26px, 3vw, 40px);
+  margin-bottom: clamp(26px, 3vw, 40px);
+  border-bottom: 1px solid var(--line);
+}
+.blog-etiqueta {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 9px 15px;
+  border: 1px solid var(--line);
+  color: rgba(35, 40, 31, 0.65);
+  text-decoration: none;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+.blog-etiqueta:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.blog-etiqueta.activa {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper-light);
+}
+
 /* ---------- blog: una nota en el listado ---------- */
 .nota-card-link {
   display: block;
@@ -2161,9 +2191,15 @@ h2.section-title {
   text-transform: uppercase;
   color: rgba(35, 40, 31, 0.55);
 }
-.nota-fecha span::before {
+/* la sección, la fecha y los minutos, separados por un punto medio */
+.nota-fecha > * + *::before,
+.nota-firma > * + *::before {
   content: "·";
   margin-right: 12px;
+}
+.nota-fecha strong {
+  font-weight: 400;
+  color: var(--clay);
 }
 .nota-card-cuerpo h3 {
   font-family: var(--ff-display);
@@ -2241,6 +2277,11 @@ body:has(.nota-portada) header.site:not(.scrolled) .nav-toggle span {
 .nota-portada .eyebrow a {
   text-decoration: none;
 }
+/* "— BLOG · HUERTA EN TU CASA": la sección al lado del blog */
+.nota-portada .eyebrow a + a::before {
+  content: "·";
+  margin-right: 10px;
+}
 .nota-portada h1 {
   font-family: var(--ff-display);
   font-weight: 400;
@@ -2270,10 +2311,6 @@ body:has(.nota-portada) header.site:not(.scrolled) .nav-toggle span {
   text-transform: uppercase;
   color: rgba(35, 40, 31, 0.55);
 }
-.nota-firma span::before {
-  content: "·";
-  margin-right: 12px;
-}
 .nota-foto {
   aspect-ratio: 16 / 9;
   margin: clamp(26px, 3vw, 44px) 0 clamp(34px, 4vw, 58px);
@@ -2296,6 +2333,29 @@ body:has(.nota-portada) header.site:not(.scrolled) .nav-toggle span {
   line-height: 1.12;
   margin: 44px 0 16px;
 }
+/* Tailwind saca las viñetas de raíz, así que acá se vuelven a pedir: una
+   receta sin viñetas ni números es un párrafo largo con guiones adentro. */
+.nota-cuerpo ul {
+  list-style: disc;
+}
+.nota-cuerpo ol {
+  list-style: decimal;
+}
+.nota-cuerpo ul,
+.nota-cuerpo ol {
+  margin: 0 0 26px;
+  padding-left: 22px;
+  font-size: 17.5px;
+  line-height: 1.75;
+  color: rgba(35, 40, 31, 0.86);
+}
+.nota-cuerpo li {
+  margin-bottom: 8px;
+  padding-left: 6px;
+}
+.nota-cuerpo li::marker {
+  color: var(--clay);
+}
 .nota-cuerpo blockquote {
   margin: 36px 0;
   padding-left: clamp(18px, 2.5vw, 30px);
@@ -2313,6 +2373,27 @@ body:has(.nota-portada) header.site:not(.scrolled) .nav-toggle span {
   margin-top: clamp(40px, 5vw, 64px);
   padding-top: clamp(26px, 3vw, 40px);
   border-top: 1px solid var(--line);
+}
+.nota-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 22px;
+}
+.nota-etiquetas a {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.6);
+  text-decoration: none;
+  border: 1px solid var(--line);
+  padding: 7px 12px;
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+.nota-etiquetas a:hover {
+  border-color: var(--ink);
+  color: var(--ink);
 }
 .blog-otras {
   border-top: 1px solid var(--line);
@@ -3213,6 +3294,144 @@ footer .fine {
   padding: 16px;
 }
 
+/* las etiquetas de una nota, tal como van a quedar guardadas */
+.admin-etiquetas,
+.admin-etiquetas-muestra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 7px;
+}
+.admin-etiquetas em,
+.admin-etiquetas-muestra em {
+  font-style: normal;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.6);
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+.admin-etiquetas-muestra em:first-child {
+  color: var(--clay);
+  border-color: rgba(168, 85, 46, 0.4);
+}
+
+/* ---------- blog: la foto de una nota ---------- */
+/* Dos caminos a la par: subirla del dispositivo o sacarla de la galería del
+   sitio. El input de archivo no se ve —el botón de al lado lo dispara—, pero
+   sigue estando, así que el teclado y los lectores de pantalla lo encuentran. */
+.admin-campo-titulo {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.6);
+}
+.admin-foto-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+.admin-foto-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-archivo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.admin-foto-muestra.mal {
+  border-color: var(--clay);
+}
+.admin-foto-error {
+  font-weight: 400;
+  color: var(--clay);
+}
+
+.admin-galeria {
+  margin-top: 14px;
+  padding: 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+.admin-galeria-filtro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.admin-galeria-filtro .admin-chip {
+  background: none;
+  font-family: var(--ff-mono);
+  cursor: pointer;
+}
+.admin-galeria-filtro .admin-chip.activo {
+  background: var(--ink);
+  color: var(--paper-light);
+}
+/* la galería se mira, no se lee: miniatura grande y el nombre abajo */
+.admin-galeria-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.admin-galeria-foto {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.admin-galeria-imagen {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  transition: border-color 0.25s ease;
+}
+.admin-galeria-imagen img {
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.admin-galeria-foto:hover .admin-galeria-imagen {
+  border-color: var(--ink);
+}
+.admin-galeria-foto:hover .admin-galeria-imagen img {
+  transform: scale(1.05);
+}
+.admin-galeria-foto.elegida .admin-galeria-imagen {
+  border-color: var(--clay);
+  box-shadow: 0 0 0 2px var(--clay);
+}
+.admin-galeria-nombre {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: rgba(35, 40, 31, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-galeria-foto.elegida .admin-galeria-nombre {
+  color: var(--clay);
+}
+
 /* ---------- catálogo: los formularios ---------- */
 .admin-form {
   background: var(--paper-light);
@@ -3321,6 +3540,8 @@ footer .fine {
   justify-content: center;
 }
 .admin-foto-muestra img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 .admin-foto-muestra em {

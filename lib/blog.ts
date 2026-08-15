@@ -18,12 +18,16 @@ export const MAX_CUERPO = 20_000;
 export const MAX_AUTOR = 60;
 /** El slug entra en `^[a-z0-9][a-z0-9-]{1,79}$`. */
 export const MAX_SLUG = 80;
+/** Cuántas etiquetas entran en una nota. La tabla tiene el mismo tope. */
+export const MAX_ETIQUETAS = 6;
+export const MAX_ETIQUETA = 40;
 
 /**
  * El slug de una nota a partir de su título: "La primera cosecha" queda como
- * `la-primera-cosecha`. Se propone al escribir el título y después se puede
- * corregir a mano, pero una vez publicada conviene no tocarlo: es la URL, y
- * cambiarla rompe el link que alguien haya guardado.
+ * `la-primera-cosecha`. No hay campo para escribirlo: sale del título y listo.
+ * Cuando dos títulos dan el mismo, quien guarda le agrega un número; y una vez
+ * que la nota salió, el slug no se mueve más aunque le cambien el título,
+ * porque es el link que alguien puede haber guardado.
  */
 export function slugDeTitulo(titulo: string): string {
   return normalizar(titulo)
@@ -31,6 +35,67 @@ export function slugDeTitulo(titulo: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, MAX_SLUG)
     .replace(/-+$/g, "");
+}
+
+/**
+ * Las etiquetas de una nota, como se escriben en el panel: separadas por coma.
+ * La primera es la sección en la que va la nota —"La Pebeta en tu casa",
+ * "Huerta en tu casa"— y las demás, temas sueltos.
+ *
+ * Se limpian acá: sin repetidas —"Huerta" y "huerta" son la misma—, sin vacías
+ * y hasta seis.
+ */
+export function etiquetasDesdeTexto(texto: string): string[] {
+  const vistas = new Set<string>();
+  const etiquetas: string[] = [];
+
+  for (const cruda of texto.split(",")) {
+    const etiqueta = cruda.trim().replace(/\s+/g, " ");
+    if (!etiqueta) continue;
+
+    const clave = normalizar(etiqueta);
+    if (vistas.has(clave)) continue;
+
+    vistas.add(clave);
+    etiquetas.push(etiqueta);
+    if (etiquetas.length === MAX_ETIQUETAS) break;
+  }
+
+  return etiquetas;
+}
+
+/** Cómo se escriben en el campo del panel: "Recetas, Huerta en tu casa". */
+export function etiquetasComoTexto(etiquetas: string[]): string {
+  return etiquetas.join(", ");
+}
+
+/** Lo que viaja en la URL del blog: `/blog?etiqueta=huerta-en-tu-casa`. */
+export function slugDeEtiqueta(etiqueta: string): string {
+  return normalizar(etiqueta)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/** Las etiquetas que hay en el blog, ordenadas y sin repetir. */
+export function etiquetasDe(notas: { etiquetas: string[] }[]): string[] {
+  const vistas = new Map<string, string>();
+
+  for (const nota of notas) {
+    for (const etiqueta of nota.etiquetas) {
+      const clave = slugDeEtiqueta(etiqueta);
+      if (clave && !vistas.has(clave)) vistas.set(clave, etiqueta);
+    }
+  }
+
+  return [...vistas.values()].sort((una, otra) => una.localeCompare(otra, "es"));
+}
+
+/**
+ * La foto de una nota puede ser una clave del manifiesto o una imagen subida
+ * desde el panel, que vive en el bucket de Supabase y llega como URL.
+ */
+export function esFotoSubida(foto: string): boolean {
+  return /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/[\w./-]+$/.test(foto);
 }
 
 /**
@@ -51,10 +116,12 @@ export function estadoDeNota(nota: Pick<Nota, "publicada" | "fecha">, ahora = Da
 /** Lo que llega del formulario: todo texto, como sale de un FormData. */
 export type NotaCruda = {
   titulo: string;
+  /** Lo resuelve quien llama: sale del título y no hay campo para escribirlo. */
   slug: string;
   bajada: string;
   cuerpo: string;
   autor: string;
+  etiquetas: string[];
   foto: string;
   publicada: boolean;
   /** Ya resuelta a ISO por quien llama: el input manda hora local, sin zona. */
@@ -77,8 +144,8 @@ export function validarNota(crudo: NotaCruda, { fotos }: { fotos: string[] }): R
   if (!/^[a-z0-9][a-z0-9-]{1,79}$/.test(slug)) {
     return {
       ok: false,
-      error: "La dirección de la nota va en minúsculas, con números y guiones. Probá con otro título.",
-      campo: "slug",
+      error: "De ese título no sale una dirección para la nota. Probá con letras y números.",
+      campo: "titulo",
     };
   }
 
@@ -100,9 +167,26 @@ export function validarNota(crudo: NotaCruda, { fotos }: { fotos: string[] }): R
     return { ok: false, error: "El nombre de quien firma quedó muy largo.", campo: "autor" };
   }
 
+  const etiquetas = crudo.etiquetas.map((etiqueta) => etiqueta.trim()).filter(Boolean);
+  if (etiquetas.length > MAX_ETIQUETAS) {
+    return { ok: false, error: `Hasta ${MAX_ETIQUETAS} etiquetas por nota.`, campo: "etiquetas" };
+  }
+  for (const etiqueta of etiquetas) {
+    if (etiqueta.length < 2 || etiqueta.length > MAX_ETIQUETA) {
+      return {
+        ok: false,
+        error: `"${etiqueta}" no entra como etiqueta: van de 2 a ${MAX_ETIQUETA} caracteres.`,
+        campo: "etiquetas",
+      };
+    }
+    if (!slugDeEtiqueta(etiqueta)) {
+      return { ok: false, error: `"${etiqueta}" no sirve como etiqueta.`, campo: "etiquetas" };
+    }
+  }
+
   const foto = crudo.foto.trim();
-  if (foto && !fotos.includes(foto)) {
-    return { ok: false, error: "Esa foto no está en el manifiesto.", campo: "foto" };
+  if (foto && !fotos.includes(foto) && !esFotoSubida(foto)) {
+    return { ok: false, error: "Esa foto no está.", campo: "foto" };
   }
 
   const fecha = new Date(crudo.fecha);
@@ -118,6 +202,7 @@ export function validarNota(crudo: NotaCruda, { fotos }: { fotos: string[] }): R
       bajada,
       cuerpo,
       autor,
+      etiquetas,
       foto,
       publicada: crudo.publicada,
       fecha: fecha.toISOString(),
@@ -129,9 +214,14 @@ export function validarNota(crudo: NotaCruda, { fotos }: { fotos: string[] }): R
  * El cuerpo, partido en lo que se va a dibujar. La nota se escribe en un
  * textarea, no en un editor, así que la sintaxis es la que alguien usaría sin
  * que se la expliquen: un renglón en blanco separa párrafos, `##` al principio
- * es un subtítulo y `>` una cita.
+ * es un subtítulo, `>` una cita, `-` una lista y `1.` una lista numerada.
  */
-export type Bloque = { tipo: "parrafo" | "subtitulo" | "cita"; texto: string };
+export type Bloque =
+  | { tipo: "parrafo" | "subtitulo" | "cita"; texto: string }
+  | { tipo: "lista"; ordenada: boolean; items: string[] };
+
+const VINETA = /^[-*•]\s+/;
+const NUMERO = /^\d+[.)]\s+/;
 
 export function bloquesDelCuerpo(cuerpo: string): Bloque[] {
   return cuerpo
@@ -139,13 +229,14 @@ export function bloquesDelCuerpo(cuerpo: string): Bloque[] {
     .split(/\n\s*\n/)
     .map((crudo) => crudo.trim())
     .filter(Boolean)
-    .map((texto) => {
+    .map((texto): Bloque => {
       if (texto.startsWith("##")) {
-        return { tipo: "subtitulo" as const, texto: texto.replace(/^#+\s*/, "") };
+        return { tipo: "subtitulo", texto: texto.replace(/^#+\s*/, "") };
       }
+
       if (texto.startsWith(">")) {
         return {
-          tipo: "cita" as const,
+          tipo: "cita",
           // una cita de varios renglones sigue siendo una: cada uno trae su >
           texto: texto
             .split("\n")
@@ -154,7 +245,21 @@ export function bloquesDelCuerpo(cuerpo: string): Bloque[] {
             .trim(),
         };
       }
-      return { tipo: "parrafo" as const, texto };
+
+      // una lista es un bloque en el que todos los renglones empiezan igual;
+      // si uno solo se sale, es un párrafo que arranca con un guión y listo
+      const lineas = texto.split("\n").map((linea) => linea.trim()).filter(Boolean);
+      for (const marca of [VINETA, NUMERO]) {
+        if (lineas.length > 0 && lineas.every((linea) => marca.test(linea))) {
+          return {
+            tipo: "lista",
+            ordenada: marca === NUMERO,
+            items: lineas.map((linea) => linea.replace(marca, "")),
+          };
+        }
+      }
+
+      return { tipo: "parrafo", texto };
     });
 }
 
@@ -163,7 +268,7 @@ export function resumenDe(nota: Pick<Nota, "bajada" | "cuerpo">): string {
   if (nota.bajada) return nota.bajada;
 
   const primero = bloquesDelCuerpo(nota.cuerpo).find((bloque) => bloque.tipo === "parrafo");
-  if (!primero) return "";
+  if (!primero || primero.tipo !== "parrafo") return "";
 
   return primero.texto.length > 180 ? `${primero.texto.slice(0, 177).trimEnd()}…` : primero.texto;
 }

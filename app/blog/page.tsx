@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { NotaCard } from "@/components/blog/NotaCard";
+import { etiquetasDe, slugDeEtiqueta } from "@/lib/blog";
 import { WHATSAPP } from "@/lib/contacto";
 import { listarNotas, type Nota } from "@/lib/db";
 
@@ -24,7 +26,11 @@ export const metadata: Metadata = {
  */
 export const dynamic = "force-dynamic";
 
-export default async function BlogPage() {
+export default async function BlogPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ etiqueta?: string }>;
+}) {
   let notas: Nota[] = [];
   let fallo = false;
 
@@ -35,7 +41,14 @@ export default async function BlogPage() {
     fallo = true;
   }
 
-  const [ultima, ...resto] = notas;
+  const etiquetas = etiquetasDe(notas);
+  const pedida = (await searchParams).etiqueta ?? "";
+  // el filtro viaja como slug: la etiqueta se escribe "Huerta en tu casa" y en
+  // la URL es `huerta-en-tu-casa`
+  const elegida = etiquetas.find((etiqueta) => slugDeEtiqueta(etiqueta) === pedida) ?? "";
+
+  const recorte = elegida ? notas.filter((nota) => nota.etiquetas.includes(elegida)) : notas;
+  const [ultima, ...resto] = recorte;
 
   return (
     <>
@@ -53,21 +66,52 @@ export default async function BlogPage() {
           </div>
         </section>
 
-        {fallo || notas.length === 0 ? (
+        {recorte.length === 0 ? (
           <div className="wrap blog-caido">
-            <h2>{fallo ? "No pudimos abrir el blog." : "Todavía no hay ninguna nota."}</h2>
+            <h2>
+              {fallo
+                ? "No pudimos abrir el blog."
+                : elegida
+                  ? `Todavía no hay nada en ${elegida}.`
+                  : "Todavía no hay ninguna nota."}
+            </h2>
             <p>
               {fallo
                 ? "La base no contestó. Recargá la página en un rato; si seguimos así, escribinos y te contamos lo que quieras saber."
-                : "Estamos escribiendo la primera. Mientras tanto, escribinos y te contamos qué se está cosechando."}
+                : elegida
+                  ? "Va a haber. Mientras tanto, mirá el resto de las notas."
+                  : "Estamos escribiendo la primera. Mientras tanto, escribinos y te contamos qué se está cosechando."}
             </p>
-            <a className="btn primary" href={WHATSAPP} target="_blank" rel="noreferrer">
-              Escribinos por WhatsApp
-            </a>
+            {elegida && !fallo ? (
+              <Link className="btn ghost" href="/blog">
+                Ver todas las notas
+              </Link>
+            ) : (
+              <a className="btn primary" href={WHATSAPP} target="_blank" rel="noreferrer">
+                Escribinos por WhatsApp
+              </a>
+            )}
           </div>
         ) : (
           <section className="blog-cuerpo">
             <div className="wrap">
+              {etiquetas.length > 0 ? (
+                <nav className="blog-etiquetas reveal" aria-label="Secciones del blog">
+                  <Link href="/blog" className={`blog-etiqueta${elegida ? "" : " activa"}`}>
+                    Todas
+                  </Link>
+                  {etiquetas.map((etiqueta) => (
+                    <Link
+                      key={etiqueta}
+                      href={`/blog?etiqueta=${slugDeEtiqueta(etiqueta)}`}
+                      className={`blog-etiqueta${elegida === etiqueta ? " activa" : ""}`}
+                    >
+                      {etiqueta}
+                    </Link>
+                  ))}
+                </nav>
+              ) : null}
+
               <NotaCard nota={ultima} destacada />
 
               {resto.length > 0 ? (

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { FaltaSecretKey } from "@/components/admin/AdminAviso";
 import { NotaForm } from "@/components/admin/NotaForm";
+import { etiquetasDe } from "@/lib/blog";
+import { listarNotasDelPanel } from "@/lib/db";
 import { paraElReloj } from "@/lib/fechas";
 import { fotosDisponibles } from "@/lib/photos";
 import { hayClaveDeAdmin } from "@/lib/supabase";
@@ -11,6 +13,15 @@ import { hayClaveDeAdmin } from "@/lib/supabase";
  */
 export default async function NuevaNotaPage() {
   if (!hayClaveDeAdmin()) return <FaltaSecretKey />;
+
+  // las etiquetas que ya están, para que la sección se elija en vez de
+  // escribirse de nuevo (y que no queden "Recetas" y "recetas" por separado)
+  let usadas: string[] = [];
+  try {
+    usadas = etiquetasDe(await listarNotasDelPanel());
+  } catch (error) {
+    console.error("No se pudieron leer las etiquetas", error);
+  }
 
   return (
     <>
@@ -25,7 +36,12 @@ export default async function NuevaNotaPage() {
         </p>
       </header>
 
-      <NotaForm nota={null} fotos={fotosDisponibles()} fecha={paraElReloj(new Date().toISOString())} />
+      <NotaForm
+        nota={null}
+        fotos={fotosDisponibles()}
+        usadas={usadas}
+        fecha={paraElReloj(new Date().toISOString())}
+      />
     </>
   );
 }
