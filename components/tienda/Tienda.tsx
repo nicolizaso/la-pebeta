@@ -36,6 +36,14 @@ export function Tienda({
     [productos]
   );
 
+  // Las categorías se cargan desde el panel, así que puede haber una recién
+  // creada todavía vacía: al aside van las que tienen algo adentro, para que
+  // ningún cajón se ofrezca en cero.
+  const cajones = useMemo(
+    () => categorias.filter((categoria) => productos.some((p) => p.categoria === categoria.id)),
+    [categorias, productos]
+  );
+
   const [filtro, setFiltro] = useState<FiltroTienda>(() => filtroInicial(techo));
   const [carrito, setCarrito] = useState<Record<string, number>>({});
   const [abierto, setAbierto] = useState(false);
@@ -126,7 +134,7 @@ export function Tienda({
     <>
       <div className="wrap tienda-cuerpo">
         <TiendaFiltros
-          categorias={categorias}
+          categorias={cajones}
           conteos={conteos}
           total={base.length}
           techo={techo}
@@ -141,7 +149,7 @@ export function Tienda({
             <p className="tienda-conteo">
               {visibles.length} {visibles.length === 1 ? "producto" : "productos"}
               {filtro.categoria
-                ? ` en ${categorias.find((c) => c.id === filtro.categoria)?.nombre ?? ""}`
+                ? ` en ${cajones.find((c) => c.id === filtro.categoria)?.nombre ?? ""}`
                 : ""}
             </p>
 

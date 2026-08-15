@@ -25,9 +25,9 @@ Abrí [http://localhost:3000](http://localhost:3000).
 - `components/` — una pieza por sección, más `Photo` (la primitiva de imagen), `Lightbox` (visor a pantalla completa) y `SiteAnimations`, que centraliza Lenis + GSAP ScrollTrigger. En `components/admin/` van las del panel y en `components/tienda/` las del catálogo y el carrito.
 - `lib/` — `photos.ts` y el manifiesto generado de imágenes, `db.ts` (los tipos
   y el acceso a la base), `supabase.ts` (la conexión), `reservas.ts`,
-  `horarios.ts` y `tienda.ts` (las reglas de cada uno), `admin.ts` (la puerta
-  del panel), `fechas.ts`, `contacto.ts` y `smooth-scroll.ts` (el puente para
-  mover la página a través de Lenis).
+  `horarios.ts`, `tienda.ts` y `productos.ts` (las reglas de cada uno),
+  `admin.ts` (la puerta del panel), `fechas.ts`, `contacto.ts` y
+  `smooth-scroll.ts` (el puente para mover la página a través de Lenis).
 - `assets/imgs/` — originales de cámara, ordenados por área. No se sirven: son el archivo del que sale `public/imgs/`.
 - `public/imgs/` — versiones web (WebP redimensionado) generadas por el script.
 - `reference/` — prototipo HTML original usado como base del diseño.
@@ -40,7 +40,7 @@ Los datos viven en Postgres, en Supabase. Son cinco tablas:
 | --- | --- |
 | `pebeta_reservas` | Pedidos de paseo y de mesa, con `estado` (`pendiente` / `confirmada` / `cancelada`) y un `codigo` corto para dictar por teléfono. |
 | `pebeta_productos` | El catálogo de la proveeduría: precio, unidad, stock, su categoría y la clave de su foto en el manifiesto. |
-| `pebeta_categorias` | Los cajones del catálogo (`verduras`, `frutas`, `granja`, `conservas`, `panaderia`, `plantines`), con el orden en que se listan. |
+| `pebeta_categorias` | Los cajones del catálogo, con el orden en que se listan. No hay una lista fija en el código: se cargan desde el panel y el `id` sale del nombre (`quesos-de-tambo`). |
 | `pebeta_compras` | Las compras de la tienda, con sus ítems, el total y el `estado` (`pagada` / `entregada` / `cancelada`). |
 | `pebeta_horarios` | Los horarios de atención: una fila por área (`proveeduria` / `restaurant`) y día de la semana. |
 
@@ -89,6 +89,14 @@ precio máximo y un filtro de stock, y al lado la grilla. El catálogo entero
 así que buscar y filtrar no vuelve al server. La página no se cachea: lo que
 muestra incluye el stock.
 
+Las categorías del aside son las filas de `pebeta_categorias` que tienen algo
+adentro: una que se crea en el panel aparece en cuanto se le publica el primer
+producto, y una vacía no ocupa un renglón que siempre saldría en cero. Como los
+productos cuelgan de su categoría, esconder una en el panel saca del catálogo
+todo lo que tiene adentro —también de `POST /api/compras`, que valida contra el
+mismo catálogo—, y volver a mostrarla lo trae entero, sin haber tocado producto
+por producto.
+
 El carrito vive en `localStorage` (no hay cuentas), y al releerlo se contrasta
 contra el catálogo del día: si un producto ya no está o bajó el stock, la
 cantidad se recorta en vez de romper el pedido.
@@ -116,7 +124,16 @@ aside con las secciones y, al lado, la que esté abierta:
 | Resumen | Lo que hay tomado de hoy en adelante —pendientes, reservas del día, personas anotadas— más lo vendido en la tienda en los últimos 30 días y los pedidos que faltan entregar. |
 | Reservas | Paseos y mesas en la misma tabla, con filtros por qué, cuándo y estado, y los botones para confirmar, cancelar o reabrir. |
 | Compras | Los pedidos de la tienda, lo último primero, con el detalle de cada uno y su total. Entran `pagada`: se marcan entregadas cuando la persona pasó a retirar, o canceladas si no pasó. |
+| Productos | El catálogo entero, publicado o no, con filtros por categoría, estado y buscador. Se carga, se edita, se publica, se esconde y se borra. |
+| Categorías | Los cajones de la tienda: nombre, bajada, orden y si están a la vista. Se puede crear una sin pasar por acá, desde el select del formulario de un producto. |
 | Horarios | La semana de la proveeduría y la del restaurant, siete renglones cada una, con su nota por día. |
+
+Cargar un producto en una categoría que todavía no existe no obliga a ir a
+crearla antes: la última opción del select es inventarla, el nombre se escribe
+ahí mismo y la categoría la da de alta la misma action que guarda el producto,
+con el `id` que sale de ese nombre. Desde ese momento está en el aside de la
+tienda, en los filtros del panel y en el select del próximo producto. Si ya
+había una que se guardaba con el mismo `id`, se usa esa en vez de duplicarla.
 
 La puerta es una clave en `ADMIN_PASSWORD` y una cookie httpOnly con su hash:
 alcanza para que las reservas no queden a la vista en una URL adivinable, y el

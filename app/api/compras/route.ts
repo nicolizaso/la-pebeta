@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { crearCompra, listarProductos } from "@/lib/db";
+import { crearCompra, listarCatalogo } from "@/lib/db";
 import { validarCompra } from "@/lib/tienda";
 
 /**
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
 
   let catalogo;
   try {
-    catalogo = await listarProductos();
+    catalogo = (await listarCatalogo()).productos;
   } catch (error) {
     console.error("No se pudo leer el catálogo para cerrar la compra", error);
     return NextResponse.json(

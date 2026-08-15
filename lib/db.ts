@@ -85,6 +85,21 @@ export type Categoria = {
   activa: boolean;
 };
 
+/** Lo que se carga en el formulario del panel, ya validado. */
+export type DatosProducto = {
+  nombre: string;
+  descripcion: string;
+  precio: number;
+  unidad: string;
+  stock: number;
+  categoria: string;
+  foto: string;
+  activo: boolean;
+};
+
+/** El catálogo publicado, leído de una sola vez: las categorías y sus productos. */
+export type Catalogo = { categorias: Categoria[]; productos: Producto[] };
+
 export type CompraItem = {
   productoId: string;
   nombre: string;
@@ -157,19 +172,6 @@ export async function crearReserva(datos: NuevaReserva): Promise<Reserva> {
   return reserva;
 }
 
-/** El catálogo publicado de la proveeduría. */
-export async function listarProductos(): Promise<Producto[]> {
-  const { data, error } = await supabase()
-    .from(TABLAS.productos)
-    .select()
-    .eq("activo", true)
-    .order("categoria", { ascending: true })
-    .order("nombre", { ascending: true });
-
-  if (error) throw new Error(`No se pudo leer el catálogo: ${error.message}`);
-  return (data ?? []) as Producto[];
-}
-
 /** Las categorías publicadas, en el orden en que se muestran en la tienda. */
 export async function listarCategorias(): Promise<Categoria[]> {
   const { data, error } = await supabase()
@@ -180,6 +182,142 @@ export async function listarCategorias(): Promise<Categoria[]> {
 
   if (error) throw new Error(`No se pudieron leer las categorías: ${error.message}`);
   return (data ?? []) as Categoria[];
+}
+
+/**
+ * El catálogo publicado de la proveeduría: las categorías que están a la vista
+ * y los productos que caen en ellas.
+ *
+ * Los dos viajan juntos porque uno depende del otro: un producto de una
+ * categoría escondida no se muestra ni se puede comprar, así que esconder una
+ * categoría en el panel alcanza para sacar del catálogo todo lo que tiene
+ * adentro, sin tocar producto por producto y sin perder cuál estaba publicado
+ * cuando se la vuelve a mostrar.
+ */
+export async function listarCatalogo(): Promise<Catalogo> {
+  const categorias = await listarCategorias();
+  if (categorias.length === 0) return { categorias, productos: [] };
+
+  const { data, error } = await supabase()
+    .from(TABLAS.productos)
+    .select()
+    .eq("activo", true)
+    .in(
+      "categoria",
+      categorias.map((categoria) => categoria.id)
+    )
+    .order("nombre", { ascending: true });
+
+  if (error) throw new Error(`No se pudo leer el catálogo: ${error.message}`);
+  return { categorias, productos: (data ?? []) as Producto[] };
+}
+
+/* ---------- el catálogo desde el panel ----------
+   Todo lo de acá va con la secret key: `pebeta_productos` y `pebeta_categorias`
+   sólo tienen policy de lectura, y de lo publicado. Escribir el catálogo y ver
+   lo que todavía no está a la vista es cosa del panel. */
+
+/** El catálogo entero, publicado y sin publicar, para el listado del panel. */
+export async function listarProductosDelPanel(): Promise<Producto[]> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.productos)
+    .select()
+    .order("nombre", { ascending: true });
+
+  if (error) throw new Error(`No se pudo leer el catálogo: ${error.message}`);
+  return (data ?? []) as Producto[];
+}
+
+/** Un producto por id, para editarlo. Null si ya no está. */
+export async function buscarProducto(id: string): Promise<Producto | null> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.productos)
+    .select()
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error(`No se pudo leer el producto: ${error.message}`);
+  return (data as Producto | null) ?? null;
+}
+
+/** Agrega un producto y devuelve el id con el que quedó guardado. */
+export async function crearProducto(datos: DatosProducto): Promise<string> {
+  const id = crypto.randomUUID();
+
+  const { error } = await supabaseAdmin()
+    .from(TABLAS.productos)
+    .insert({ id, creado: new Date().toISOString(), ...datos });
+
+  if (error) throw new Error(`No se pudo guardar el producto: ${error.message}`);
+  return id;
+}
+
+export async function actualizarProducto(id: string, datos: DatosProducto): Promise<void> {
+  const { error } = await supabaseAdmin().from(TABLAS.productos).update(datos).eq("id", id);
+
+  if (error) throw new Error(`No se pudo guardar el producto: ${error.message}`);
+}
+
+/** Publicar o esconder un producto, sin abrir el formulario. */
+export async function publicarProducto(id: string, activo: boolean): Promise<void> {
+  const { error } = await supabaseAdmin().from(TABLAS.productos).update({ activo }).eq("id", id);
+
+  if (error) throw new Error(`No se pudo cambiar el producto: ${error.message}`);
+}
+
+/**
+ * Borra un producto de verdad. Las compras viejas no se tocan: cada una guarda
+ * el nombre y el precio de lo que se llevó, así que el ticket sigue igual.
+ */
+export async function borrarProducto(id: string): Promise<void> {
+  const { error } = await supabaseAdmin().from(TABLAS.productos).delete().eq("id", id);
+
+  if (error) throw new Error(`No se pudo borrar el producto: ${error.message}`);
+}
+
+/** Las categorías del panel: también las escondidas. */
+export async function listarCategoriasDelPanel(): Promise<Categoria[]> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.categorias)
+    .select()
+    .order("orden", { ascending: true });
+
+  if (error) throw new Error(`No se pudieron leer las categorías: ${error.message}`);
+  return (data ?? []) as Categoria[];
+}
+
+/**
+ * Guarda categorías. Es un upsert sobre el id —que es el nombre en minúsculas y
+ * con guiones—, así que crear una nueva y editar una que ya estaba son la misma
+ * operación, y la lista entera se guarda de una sola vez.
+ */
+export async function guardarCategorias(categorias: Categoria[]): Promise<void> {
+  if (categorias.length === 0) return;
+
+  const { error } = await supabaseAdmin().from(TABLAS.categorias).upsert(categorias);
+
+  if (error) throw new Error(`No se pudo guardar la categoría: ${error.message}`);
+}
+
+/** Cuántos productos hay en una categoría, contando los que no están publicados. */
+export async function contarProductosDe(categoria: string): Promise<number> {
+  const { count, error } = await supabaseAdmin()
+    .from(TABLAS.productos)
+    .select("id", { count: "exact", head: true })
+    .eq("categoria", categoria);
+
+  if (error) throw new Error(`No se pudieron contar los productos: ${error.message}`);
+  return count ?? 0;
+}
+
+/**
+ * Borra una categoría. La base la protege igual: `pebeta_productos.categoria`
+ * apunta acá, así que una categoría con productos adentro no se puede borrar.
+ */
+export async function borrarCategoria(id: string): Promise<void> {
+  const { error } = await supabaseAdmin().from(TABLAS.categorias).delete().eq("id", id);
+
+  if (error) throw new Error(`No se pudo borrar la categoría: ${error.message}`);
 }
 
 /**
