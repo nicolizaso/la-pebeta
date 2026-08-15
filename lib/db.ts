@@ -6,7 +6,7 @@ import { supabase, supabaseAdmin } from "./supabase";
  * pasa por este archivo, así que mover los datos de lugar es reescribir esto y
  * nada más.
  *
- * Hoy son cuatro tablas en Postgres (Supabase), con prefijo `pebeta_` porque
+ * Hoy son cinco tablas en Postgres (Supabase), con prefijo `pebeta_` porque
  * comparten proyecto con otra app. Cuando La Pebeta tenga su propio proyecto,
  * cambia el prefijo y la conexión; los tipos y las firmas quedan igual.
  *
@@ -17,6 +17,7 @@ import { supabase, supabaseAdmin } from "./supabase";
 export const TABLAS = {
   reservas: "pebeta_reservas",
   productos: "pebeta_productos",
+  categorias: "pebeta_categorias",
   compras: "pebeta_compras",
   horarios: "pebeta_horarios",
 } as const;
@@ -66,9 +67,22 @@ export type Producto = {
   /** "kg", "docena", "frasco 250 g", … */
   unidad: string;
   stock: number;
+  /** El `id` de una fila de `pebeta_categorias`. */
   categoria: string;
+  /** Clave del manifiesto de fotos ("huerta/17"), o vacía si no tiene. */
+  foto: string;
   activo: boolean;
   creado: string;
+};
+
+/** Los cajones en los que se ordena el catálogo de la tienda. */
+export type Categoria = {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  /** En qué orden se listan; el chico primero. */
+  orden: number;
+  activa: boolean;
 };
 
 export type CompraItem = {
@@ -79,11 +93,20 @@ export type CompraItem = {
   precio: number;
 };
 
+export type CompraEstado = "pendiente" | "pagada" | "entregada" | "cancelada";
+
 export type Compra = {
   id: string;
   codigo: string;
-  estado: "pendiente" | "pagada" | "entregada" | "cancelada";
+  estado: CompraEstado;
   creada: string;
+  cliente: { nombre: string; telefono: string; email: string };
+  items: CompraItem[];
+  total: number;
+};
+
+/** Lo que la tienda manda a la API, ya validado y con los precios del catálogo. */
+export type NuevaCompra = {
   cliente: { nombre: string; telefono: string; email: string };
   items: CompraItem[];
   total: number;
@@ -140,10 +163,78 @@ export async function listarProductos(): Promise<Producto[]> {
     .from(TABLAS.productos)
     .select()
     .eq("activo", true)
-    .order("categoria", { ascending: true });
+    .order("categoria", { ascending: true })
+    .order("nombre", { ascending: true });
 
   if (error) throw new Error(`No se pudo leer el catálogo: ${error.message}`);
   return (data ?? []) as Producto[];
+}
+
+/** Las categorías publicadas, en el orden en que se muestran en la tienda. */
+export async function listarCategorias(): Promise<Categoria[]> {
+  const { data, error } = await supabase()
+    .from(TABLAS.categorias)
+    .select()
+    .eq("activa", true)
+    .order("orden", { ascending: true });
+
+  if (error) throw new Error(`No se pudieron leer las categorías: ${error.message}`);
+  return (data ?? []) as Categoria[];
+}
+
+/**
+ * Agrega la compra y devuelve el objeto tal como quedó guardado.
+ *
+ * Nace `pagada` porque la pasarela ya le dio el ok, y por la misma razón que
+ * las reservas el insert no pide RETURNING: la tabla no tiene policy de SELECT,
+ * así que los pedidos —con sus teléfonos— sólo se leen desde el panel.
+ */
+export async function crearCompra(datos: NuevaCompra): Promise<Compra> {
+  const compra: Compra = {
+    id: crypto.randomUUID(),
+    codigo: nuevoCodigo("PT"),
+    estado: "pagada",
+    creada: new Date().toISOString(),
+    ...datos,
+  };
+
+  const { error } = await supabase().from(TABLAS.compras).insert(compra);
+  if (error) throw new Error(`No se pudo guardar la compra: ${error.message}`);
+
+  return compra;
+}
+
+export type FiltroCompras = {
+  estado?: CompraEstado;
+  /** Sólo las creadas de este momento en adelante (ISO). */
+  desde?: string;
+};
+
+/**
+ * El listado de compras del panel. Va con la secret key: los pedidos tienen
+ * nombre, teléfono y mail de quien compró.
+ */
+export async function listarCompras(filtro: FiltroCompras = {}): Promise<Compra[]> {
+  let consulta = supabaseAdmin().from(TABLAS.compras).select();
+
+  if (filtro.estado) consulta = consulta.eq("estado", filtro.estado);
+  if (filtro.desde) consulta = consulta.gte("creada", filtro.desde);
+
+  // lo último que entró, primero: es lo que hay que preparar
+  const { data, error } = await consulta.order("creada", { ascending: false });
+
+  if (error) throw new Error(`No se pudieron leer las compras: ${error.message}`);
+  return (data ?? []) as Compra[];
+}
+
+/** Marcar una compra como entregada, o darla de baja, desde el panel. */
+export async function cambiarEstadoCompra(id: string, estado: CompraEstado): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from(TABLAS.compras)
+    .update({ estado })
+    .eq("id", id);
+
+  if (error) throw new Error(`No se pudo cambiar el estado de la compra: ${error.message}`);
 }
 
 export type FiltroReservas = {

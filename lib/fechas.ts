@@ -25,3 +25,21 @@ export function fechaCorta(fecha: string): string {
 export function fechaLarga(fecha: string): string {
   return LARGA.format(new Date(`${fecha}T12:00:00`));
 }
+
+const MOMENTO = new Intl.DateTimeFormat("es-AR", {
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  // de 0 a 23, como el resto de los horarios del sitio
+  hourCycle: "h23",
+  timeZone: "America/Argentina/Buenos_Aires",
+});
+
+/**
+ * "21 ago, 14:35" — para lo que se guarda con hora exacta, como el momento en
+ * que entró una compra. Va en hora de Los Cardales, no en la del server.
+ */
+export function fechaHora(iso: string): string {
+  return MOMENTO.format(new Date(iso));
+}
