@@ -45,7 +45,7 @@ export function ProveeduriaSection() {
             productos de nuestros propios animales. Todo lo que no se usa en el restaurant, sale
             por acá.
           </p>
-          <LinkArrow href="/#visita">Ver productos</LinkArrow>
+          <LinkArrow href="/tienda">Ver la tienda</LinkArrow>
         </div>
       </div>
     </section>

@@ -99,7 +99,7 @@ export function ReservaForm({
         <h3>{reglas.etiqueta}</h3>
       </div>
 
-      <div className="reserva-campos">
+      <div className="campos">
         <p className="campo ancho">
           <label htmlFor={`${id}-nombre`}>Nombre y apellido</label>
           <input id={`${id}-nombre`} name="nombre" type="text" required maxLength={80} autoComplete="name" />

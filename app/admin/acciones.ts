@@ -2,7 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { abrirSesion, cerrarSesion, haySesion } from "@/lib/admin";
-import { cambiarEstadoReserva, guardarHorarios, type Horario, type ReservaEstado } from "@/lib/db";
+import {
+  cambiarEstadoCompra,
+  cambiarEstadoReserva,
+  guardarHorarios,
+  type CompraEstado,
+  type Horario,
+  type ReservaEstado,
+} from "@/lib/db";
 import { DIAS, esHorarioArea, validarSemana } from "@/lib/horarios";
 
 /**
@@ -51,6 +58,21 @@ export async function cambiarEstado(datos: FormData): Promise<void> {
 
   await cambiarEstadoReserva(id, estado);
   revalidatePath("/admin/reservas");
+  revalidatePath("/admin");
+}
+
+const ESTADOS_COMPRA: CompraEstado[] = ["pendiente", "pagada", "entregada", "cancelada"];
+
+/** Marcar una compra como entregada, cancelarla o volverla a pagada. */
+export async function cambiarEstadoDeCompra(datos: FormData): Promise<void> {
+  if (!(await haySesion())) return;
+
+  const id = texto(datos.get("id"));
+  const estado = texto(datos.get("estado")) as CompraEstado;
+  if (!id || !ESTADOS_COMPRA.includes(estado)) return;
+
+  await cambiarEstadoCompra(id, estado);
+  revalidatePath("/admin/compras");
   revalidatePath("/admin");
 }
 
