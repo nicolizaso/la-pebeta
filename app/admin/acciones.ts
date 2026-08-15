@@ -3,23 +3,30 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { abrirSesion, cerrarSesion, haySesion } from "@/lib/admin";
+import { validarNota } from "@/lib/blog";
 import {
+  actualizarNota,
   actualizarProducto,
   borrarCategoria,
+  borrarNota,
   borrarProducto,
   cambiarEstadoCompra,
   cambiarEstadoReserva,
   contarProductosDe,
+  crearNota,
   crearProducto,
   guardarCategorias,
   guardarHorarios,
   listarCategoriasDelPanel,
+  publicarNota,
   publicarProducto,
+  slugOcupado,
   type Categoria,
   type CompraEstado,
   type Horario,
   type ReservaEstado,
 } from "@/lib/db";
+import { desdeElReloj } from "@/lib/fechas";
 import { DIAS, esHorarioArea, validarSemana } from "@/lib/horarios";
 import { PHOTO_MANIFEST } from "@/lib/photos";
 import {
@@ -327,4 +334,96 @@ export async function guardarLasCategorias(
     ok: true,
     mensaje: nombreNuevo ? `Listo: ${nombreNuevo} ya está en el catálogo.` : "Categorías guardadas.",
   };
+}
+
+/* ---------- el blog ---------- */
+
+/** Lo que hay que volver a armar cuando se toca una nota. */
+function seTocoElBlog(): void {
+  revalidatePath("/admin/blog");
+  revalidatePath("/blog");
+}
+
+/**
+ * Alta y edición de una nota: el mismo formulario para las dos, con `id` vacío
+ * cuando es nueva.
+ *
+ * La fecha llega del `datetime-local` sin zona, así que se lee como hora de Los
+ * Cardales y no como la del server, que en Vercel está en UTC. Con la fecha por
+ * venir y la nota publicada, queda programada: no hay nada más que hacer, sale
+ * sola cuando llega el día.
+ */
+export async function guardarNota(_previo: Respuesta, datos: FormData): Promise<Respuesta> {
+  if (!(await haySesion())) return SIN_SESION;
+
+  const id = texto(datos.get("id"));
+  const fecha = desdeElReloj(texto(datos.get("fecha")));
+  if (!fecha) {
+    return { ok: false, mensaje: "Elegí cuándo sale la nota: día y hora.", campo: "fecha" };
+  }
+
+  const validacion = validarNota(
+    {
+      titulo: texto(datos.get("titulo")),
+      slug: texto(datos.get("slug")),
+      bajada: texto(datos.get("bajada")),
+      // el cuerpo conserva sus renglones: es lo único que no se aplana
+      cuerpo: typeof datos.get("cuerpo") === "string" ? String(datos.get("cuerpo")) : "",
+      autor: texto(datos.get("autor")),
+      foto: texto(datos.get("foto")),
+      publicada: datos.get("publicada") === "on",
+      fecha,
+    },
+    { fotos: FOTOS }
+  );
+  if (!validacion.ok) {
+    return { ok: false, mensaje: validacion.error, campo: validacion.campo };
+  }
+
+  let guardada = id;
+  try {
+    if (await slugOcupado(validacion.datos.slug, id)) {
+      return {
+        ok: false,
+        mensaje: `Ya hay una nota en /blog/${validacion.datos.slug}. Cambiale la dirección a ésta.`,
+        campo: "slug",
+      };
+    }
+
+    if (id) await actualizarNota(id, validacion.datos);
+    else guardada = await crearNota(validacion.datos);
+  } catch (error) {
+    console.error("No se pudo guardar la nota", error);
+    return { ok: false, mensaje: "No pudimos guardar la nota. Probá de nuevo." };
+  }
+
+  seTocoElBlog();
+  revalidatePath(`/blog/${validacion.datos.slug}`);
+  // vuelve al listado con la nota marcada, que es donde se sigue trabajando
+  redirect(`/admin/blog?guardada=${guardada}`);
+}
+
+/** Sacar una nota del blog o volver a ponerla, desde el listado. */
+export async function cambiarPublicacionNota(datos: FormData): Promise<void> {
+  if (!(await haySesion())) return;
+
+  const id = texto(datos.get("id"));
+  if (!id) return;
+
+  await publicarNota(id, texto(datos.get("publicada")) === "si");
+  seTocoElBlog();
+  revalidatePath(`/blog/${texto(datos.get("slug"))}`);
+}
+
+/** Borrar una nota. Es lo único del blog que no se puede deshacer. */
+export async function eliminarNota(datos: FormData): Promise<void> {
+  if (!(await haySesion())) return;
+
+  const id = texto(datos.get("id"));
+  if (!id) return;
+
+  await borrarNota(id);
+  seTocoElBlog();
+  revalidatePath(`/blog/${texto(datos.get("slug"))}`);
+  redirect("/admin/blog");
 }
