@@ -452,9 +452,7 @@ h2.section-title {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
   gap: 60px;
-}
-.intro .kicker {
-  align-self: start;
+  align-items: center;
 }
 .intro p.lede {
   font-family: var(--ff-display);

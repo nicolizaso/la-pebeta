@@ -58,22 +58,28 @@ export function SiteAnimations() {
 
     const ctx = gsap.context(() => {
       // ---------- hero entrance ----------
-      const heroMedia = ".hero .photo .photo-media";
-      const tl = gsap.timeline({ delay: 0.15 });
-      tl.from(heroMedia, { scale: 1.16, duration: 1.8, ease: "power2.out" })
-        .from(".stamp", { opacity: 0, rotate: -14, y: -10, duration: 0.6, ease: "back.out(2)" }, 0.35)
-        .from(".hero-line > span", { yPercent: 130, duration: 0.9, ease: "power4.out", stagger: 0.12 }, 0.5)
-        .from(".hero-sub", { opacity: 0, y: 18, duration: 0.7, ease: "power2.out" }, "-=0.4")
-        .from(".hero .tag", { opacity: 0, x: -14, duration: 0.6, ease: "power2.out" }, "-=0.5")
-        .from(".scroll-cue", { opacity: 0, duration: 0.6 }, "-=0.3")
-        // very slow drift once the entrance has landed, so the hero never sits still
-        .to(heroMedia, { scale: 1.07, duration: 24, ease: "sine.inOut", repeat: -1, yoyo: true });
+      // Only the home page renders a `.hero`; every other route (blog, tienda,
+      // reservas, restaurant…) also mounts <SiteAnimations />, so this whole
+      // block is guarded to avoid GSAP's "target not found" console warnings
+      // for tweens with nothing to select.
+      if (document.querySelector(".hero")) {
+        const heroMedia = ".hero .photo .photo-media";
+        const tl = gsap.timeline({ delay: 0.15 });
+        tl.from(heroMedia, { scale: 1.16, duration: 1.8, ease: "power2.out" })
+          .from(".stamp", { opacity: 0, rotate: -14, y: -10, duration: 0.6, ease: "back.out(2)" }, 0.35)
+          .from(".hero-line > span", { yPercent: 130, duration: 0.9, ease: "power4.out", stagger: 0.12 }, 0.5)
+          .from(".hero-sub", { opacity: 0, y: 18, duration: 0.7, ease: "power2.out" }, "-=0.4")
+          .from(".hero .tag", { opacity: 0, x: -14, duration: 0.6, ease: "power2.out" }, "-=0.5")
+          .from(".scroll-cue", { opacity: 0, duration: 0.6 }, "-=0.3")
+          // very slow drift once the entrance has landed, so the hero never sits still
+          .to(heroMedia, { scale: 1.07, duration: 24, ease: "sine.inOut", repeat: -1, yoyo: true });
 
-      gsap.to(heroMedia, {
-        yPercent: 10,
-        ease: "none",
-        scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true },
-      });
+        gsap.to(heroMedia, {
+          yPercent: 10,
+          ease: "none",
+          scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true },
+        });
+      }
 
       // ---------- headings, word by word ----------
       gsap.utils.toArray<HTMLElement>("[data-split]").forEach((title) => {
@@ -201,9 +207,13 @@ export function SiteAnimations() {
       });
 
       // ---------- quote cards ----------
-      gsap
-        .timeline({ scrollTrigger: { trigger: ".quote-grid", start: "top 82%" } })
-        .to(".quote-grid .quote", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out", stagger: 0.15 });
+      // `.quote-grid` only exists inside <Valores />, home-only, so guard it
+      // the same way as the hero block above.
+      if (document.querySelector(".quote-grid")) {
+        gsap
+          .timeline({ scrollTrigger: { trigger: ".quote-grid", start: "top 82%" } })
+          .to(".quote-grid .quote", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out", stagger: 0.15 });
+      }
 
       // ---------- photo marquee ----------
       gsap.utils.toArray<HTMLElement>("[data-marquee]").forEach((band) => {
