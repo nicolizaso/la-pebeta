@@ -3,7 +3,7 @@ import { crearReserva } from "@/lib/db";
 import { validarReserva } from "@/lib/reservas";
 
 /**
- * Alta de reservas: cada POST agrega una fila a `pebeta_reservas`.
+ * Alta de reservas: cada POST agrega una fila a `reservas`.
  *
  * No hay GET a propósito — el listado tiene teléfonos y mails, así que sale
  * por el ABM de admin cuando tenga auth, no por una ruta pública.

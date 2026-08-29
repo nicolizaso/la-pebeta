@@ -6,21 +6,21 @@ import { supabase, supabaseAdmin } from "./supabase";
  * pasa por este archivo, así que mover los datos de lugar es reescribir esto y
  * nada más.
  *
- * Hoy son seis tablas en Postgres (Supabase), con prefijo `pebeta_` porque
- * comparten proyecto con otra app. Cuando La Pebeta tenga su propio proyecto,
- * cambia el prefijo y la conexión; los tipos y las firmas quedan igual.
+ * Son seis tablas en Postgres, en el proyecto de Supabase de La Pebeta. El
+ * esquema está en `supabase/migrations/`: si acá se agrega un campo, allá va la
+ * migración que lo crea.
  *
  * Las funciones que usan `supabaseAdmin()` saltean RLS y son sólo del panel:
  * están marcadas una por una.
  */
 
 export const TABLAS = {
-  reservas: "pebeta_reservas",
-  productos: "pebeta_productos",
-  categorias: "pebeta_categorias",
-  compras: "pebeta_compras",
-  horarios: "pebeta_horarios",
-  notas: "pebeta_notas",
+  reservas: "reservas",
+  productos: "productos",
+  categorias: "categorias",
+  compras: "compras",
+  horarios: "horarios",
+  notas: "notas",
 } as const;
 
 export type ReservaTipo = "paseos" | "restaurant";
@@ -68,7 +68,7 @@ export type Producto = {
   /** "kg", "docena", "frasco 250 g", … */
   unidad: string;
   stock: number;
-  /** El `id` de una fila de `pebeta_categorias`. */
+  /** El `id` de una fila de `categorias`. */
   categoria: string;
   /** Clave del manifiesto de fotos ("huerta/17"), o vacía si no tiene. */
   foto: string;
@@ -263,9 +263,9 @@ export async function listarCatalogo(): Promise<Catalogo> {
 }
 
 /* ---------- el catálogo desde el panel ----------
-   Todo lo de acá va con la secret key: `pebeta_productos` y `pebeta_categorias`
-   sólo tienen policy de lectura, y de lo publicado. Escribir el catálogo y ver
-   lo que todavía no está a la vista es cosa del panel. */
+   Todo lo de acá va con la secret key: `productos` y `categorias` sólo tienen
+   policy de lectura, y de lo publicado. Escribir el catálogo y ver lo que
+   todavía no está a la vista es cosa del panel. */
 
 /** El catálogo entero, publicado y sin publicar, para el listado del panel. */
 export async function listarProductosDelPanel(): Promise<Producto[]> {
@@ -361,7 +361,7 @@ export async function contarProductosDe(categoria: string): Promise<number> {
 }
 
 /**
- * Borra una categoría. La base la protege igual: `pebeta_productos.categoria`
+ * Borra una categoría. La base la protege igual: `productos.categoria`
  * apunta acá, así que una categoría con productos adentro no se puede borrar.
  */
 export async function borrarCategoria(id: string): Promise<void> {
@@ -566,8 +566,8 @@ export type FiltroReservas = {
 };
 
 /**
- * El listado del panel. Va con la secret key porque `pebeta_reservas` no tiene
- * policy de SELECT: los teléfonos y los mails no salen de acá para afuera.
+ * El listado del panel. Va con la secret key porque `reservas` no tiene policy
+ * de SELECT: los teléfonos y los mails no salen de acá para afuera.
  */
 export async function listarReservas(filtro: FiltroReservas = {}): Promise<Reserva[]> {
   let consulta = supabaseAdmin().from(TABLAS.reservas).select();

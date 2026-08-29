@@ -12,8 +12,8 @@ import { hayClaveDeAdmin } from "@/lib/supabase";
 
 /**
  * Los cajones del catálogo. No hay una lista fija en el código: son filas de
- * `pebeta_categorias`, y lo que se guarde acá es lo que se ve en el aside de la
- * tienda y en los filtros del panel.
+ * `categorias`, y lo que se guarde acá es lo que se ve en el aside de la tienda
+ * y en los filtros del panel.
  */
 export default async function CategoriasPage() {
   if (!hayClaveDeAdmin()) return <FaltaSecretKey />;
