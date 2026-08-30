@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import { WHATSAPP } from "@/lib/contacto";
 import {
   autorizarPago,
@@ -14,7 +15,15 @@ import {
 
 export type LineaCarrito = { producto: ProductoVista; cantidad: number };
 
-type Comprobante = { codigo: string; total: number; nombre: string };
+type Comprobante = {
+  codigo: string;
+  total: number;
+  nombre: string;
+  /** ¿Quedó la sesión abierta? Pasa cuando la cuenta no tiene contraseña. */
+  entro: boolean;
+  /** Ya había cuenta con ese mail y tiene contraseña: hay que entrar. */
+  conContrasena: boolean;
+};
 
 /**
  * El carrito y el cierre de la compra, en un panel al costado.
@@ -111,6 +120,8 @@ export function Carrito({
         codigo: datos.compra.codigo,
         total: datos.compra.total,
         nombre: datos.compra.cliente.nombre,
+        entro: Boolean(datos.cuenta?.entro),
+        conContrasena: Boolean(datos.cuenta?.conContrasena),
       });
       setTarjeta(TARJETA_VACIA);
       onVaciar();
@@ -156,6 +167,16 @@ export function Carrito({
               {precio(comprobante.total)}. Preparamos el pedido y te avisamos cuando puedas pasar a
               retirarlo por la proveeduría.
             </p>
+            {comprobante.entro ? (
+              <p className="carrito-nota">
+                Te dejamos la cuenta abierta: en tu perfil vas a ver este pedido y tus reservas.
+              </p>
+            ) : comprobante.conContrasena ? (
+              <p className="carrito-nota">
+                Ya tenías una cuenta con ese mail. Entrá a tu perfil con tu contraseña y ahí lo vas
+                a ver.
+              </p>
+            ) : null}
             <p className="carrito-fino">
               El cobro es de mentira: esto es una pasarela de demostración y no se cobró nada.
             </p>
@@ -163,9 +184,15 @@ export function Carrito({
               <button type="button" className="btn primary" onClick={volverALaTienda}>
                 Seguir comprando
               </button>
-              <a className="btn ghost" href={WHATSAPP} target="_blank" rel="noreferrer">
-                Escribinos por WhatsApp
-              </a>
+              {comprobante.entro || comprobante.conContrasena ? (
+                <Link className="btn ghost" href="/perfil">
+                  Ver mi perfil
+                </Link>
+              ) : (
+                <a className="btn ghost" href={WHATSAPP} target="_blank" rel="noreferrer">
+                  Escribinos por WhatsApp
+                </a>
+              )}
             </div>
           </div>
         ) : lineas.length === 0 ? (
@@ -256,14 +283,16 @@ export function Carrito({
                       />
                     </p>
                     <p className="campo">
-                      <label htmlFor={`${id}-email`}>Mail (opcional)</label>
+                      <label htmlFor={`${id}-email`}>Mail</label>
                       <input
                         id={`${id}-email`}
                         type="email"
                         value={cliente.email}
                         onChange={(e) => setCliente({ ...cliente, email: e.target.value })}
                         autoComplete="email"
+                        required
                       />
+                      <span className="pista">Con esto ves tu pedido</span>
                     </p>
                   </div>
 

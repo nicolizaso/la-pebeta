@@ -6,7 +6,7 @@ import { supabase, supabaseAdmin } from "./supabase";
  * pasa por este archivo, así que mover los datos de lugar es reescribir esto y
  * nada más.
  *
- * Son seis tablas en Postgres, en el proyecto de Supabase de La Pebeta. El
+ * Son siete tablas en Postgres, en el proyecto de Supabase de La Pebeta. El
  * esquema está en `supabase/migrations/`: si acá se agrega un campo, allá va la
  * migración que lo crea.
  *
@@ -21,7 +21,31 @@ export const TABLAS = {
   compras: "compras",
   horarios: "horarios",
   notas: "notas",
+  usuarios: "usuarios",
 } as const;
+
+/**
+ * La cuenta de quien reserva o compra.
+ *
+ * Nadie se registra: nace sola con la primera reserva y el mail es la llave.
+ * Mientras `password_hash` esté vacío se entra con sólo escribir el mail;
+ * ponerse una contraseña desde el perfil es lo que cierra esa puerta.
+ */
+export type Usuario = {
+  id: string;
+  /** Siempre en minúsculas. Es la llave de la cuenta. */
+  email: string;
+  nombre: string;
+  telefono: string;
+  /** Vacío mientras la cuenta no tenga contraseña. */
+  password_hash: string;
+  password_puesta: string | null;
+  /** Sube al cambiar la contraseña y ahí caducan las sesiones abiertas. */
+  sesion_epoch: string;
+  creado: string;
+  actualizado: string;
+  ultimo_acceso: string;
+};
 
 export type ReservaTipo = "paseos" | "restaurant";
 export type ReservaEstado = "pendiente" | "confirmada" | "cancelada";
@@ -30,6 +54,8 @@ export type Reserva = {
   id: string;
   /** Código corto que se le muestra a quien reserva. */
   codigo: string;
+  /** La cuenta que la tomó. Null en las reservas anteriores a las cuentas. */
+  usuario_id: string | null;
   tipo: ReservaTipo;
   estado: ReservaEstado;
   creada: string;
@@ -163,6 +189,8 @@ export type CompraEstado = "pendiente" | "pagada" | "entregada" | "cancelada";
 export type Compra = {
   id: string;
   codigo: string;
+  /** La cuenta que la hizo. Null en las compras anteriores a las cuentas. */
+  usuario_id: string | null;
   estado: CompraEstado;
   creada: string;
   cliente: { nombre: string; telefono: string; email: string };
@@ -202,24 +230,222 @@ export function nuevoCodigo(prefijo = "PB"): string {
 /**
  * Agrega la reserva y devuelve el objeto tal como quedó guardado.
  *
- * La fila se arma entera acá y el insert no pide RETURNING a propósito: con
- * RLS, leer la fila recién insertada exige una policy de SELECT, y las
- * reservas no tienen ninguna —nadie puede listar teléfonos ni mails desde
- * afuera—. Los defaults de la tabla quedan igual, como red de contención.
+ * La fila se arma entera acá y el insert no pide RETURNING a propósito: leer la
+ * fila recién insertada obligaría a traerse de vuelta teléfonos y mails que ya
+ * están acá. Los defaults de la tabla quedan igual, como red de contención.
+ *
+ * Va con la secret key desde que las reservas tienen dueño: el alta y la cuenta
+ * son el mismo movimiento, y `usuarios` no se toca desde afuera. La policy de
+ * alta pública de la tabla sigue estando —nada cambió del lado de la base—,
+ * pero el sitio ya no la usa.
  */
-export async function crearReserva(datos: NuevaReserva): Promise<Reserva> {
+export async function crearReserva(
+  datos: NuevaReserva,
+  usuarioId: string | null = null
+): Promise<Reserva> {
   const reserva: Reserva = {
     id: crypto.randomUUID(),
     codigo: nuevoCodigo(),
+    usuario_id: usuarioId,
     estado: "pendiente",
     creada: new Date().toISOString(),
     ...datos,
   };
 
-  const { error } = await supabase().from(TABLAS.reservas).insert(reserva);
+  const { error } = await supabaseAdmin().from(TABLAS.reservas).insert(reserva);
   if (error) throw new Error(`No se pudo guardar la reserva: ${error.message}`);
 
   return reserva;
+}
+
+/* ---------- las cuentas ----------
+   Todo lo de acá va con la secret key: `usuarios` tiene RLS y ninguna policy,
+   así que la tabla no existe para nadie que no sea el server. */
+
+/** Una cuenta por id. Null si no está. */
+export async function buscarUsuario(id: string): Promise<Usuario | null> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.usuarios)
+    .select()
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error(`No se pudo leer la cuenta: ${error.message}`);
+  return (data as Usuario | null) ?? null;
+}
+
+/** Una cuenta por mail, que es su llave. El mail tiene que venir normalizado. */
+export async function buscarUsuarioPorEmail(email: string): Promise<Usuario | null> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.usuarios)
+    .select()
+    .eq("email", email)
+    .maybeSingle();
+
+  if (error) throw new Error(`No se pudo leer la cuenta: ${error.message}`);
+  return (data as Usuario | null) ?? null;
+}
+
+/**
+ * La cuenta de quien está reservando o comprando: la que ya tenía ese mail, o
+ * una nueva.
+ *
+ * El nombre y el teléfono que llegan del formulario sólo rellenan lo que esté
+ * vacío. Quien los corrigió en su perfil escribió la última palabra, y una
+ * reserva cargada a las apuradas desde el teléfono de otra persona no se la
+ * puede pisar.
+ *
+ * Dos reservas del mismo mail al mismo tiempo pueden querer crear la cuenta las
+ * dos: la que llega segunda choca contra el índice único y se queda con la que
+ * acaba de nacer.
+ */
+export async function asegurarUsuario(datos: {
+  email: string;
+  nombre: string;
+  telefono: string;
+}): Promise<Usuario> {
+  const existente = await buscarUsuarioPorEmail(datos.email);
+  if (existente) {
+    const faltan: Partial<Usuario> = {};
+    if (!existente.nombre && datos.nombre) faltan.nombre = datos.nombre;
+    if (!existente.telefono && datos.telefono) faltan.telefono = datos.telefono;
+    if (Object.keys(faltan).length === 0) return existente;
+
+    return actualizarUsuario(existente.id, faltan);
+  }
+
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.usuarios)
+    .insert({ email: datos.email, nombre: datos.nombre, telefono: datos.telefono })
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    // 23505: alguien creó la misma cuenta en el medio, así que es la suya
+    if (error.code === "23505") {
+      const recien = await buscarUsuarioPorEmail(datos.email);
+      if (recien) return recien;
+    }
+    throw new Error(`No se pudo crear la cuenta: ${error.message}`);
+  }
+  if (!data) throw new Error("No se pudo crear la cuenta.");
+
+  return data as Usuario;
+}
+
+/** Guarda campos de una cuenta y devuelve cómo quedó. */
+async function actualizarUsuario(id: string, cambios: Partial<Usuario>): Promise<Usuario> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.usuarios)
+    .update({ ...cambios, actualizado: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .maybeSingle();
+
+  if (error) throw new Error(`No se pudo guardar la cuenta: ${error.message}`);
+  if (!data) throw new Error("Esa cuenta ya no está.");
+
+  return data as Usuario;
+}
+
+/** Nombre y teléfono, corregidos por su dueño desde el perfil. */
+export async function guardarDatosDeUsuario(
+  id: string,
+  datos: { nombre: string; telefono: string }
+): Promise<Usuario> {
+  return actualizarUsuario(id, datos);
+}
+
+/**
+ * Guarda la contraseña de una cuenta y le sube el epoch, con lo que se caen
+ * todas las sesiones abiertas: la que la acaba de poner se vuelve a abrir en el
+ * momento, y cualquier otra que hubiera quedado dando vueltas, no.
+ */
+export async function guardarContrasena(id: string, hash: string): Promise<Usuario> {
+  const ahora = new Date().toISOString();
+  return actualizarUsuario(id, {
+    password_hash: hash,
+    password_puesta: ahora,
+    sesion_epoch: ahora,
+  });
+}
+
+/**
+ * Le saca la contraseña a una cuenta: vuelve a entrar sólo con el mail. Es la
+ * salida para quien se la olvidó, y la hace la casa desde el panel después de
+ * hablar con esa persona.
+ */
+export async function olvidarContrasena(id: string): Promise<Usuario> {
+  return actualizarUsuario(id, {
+    password_hash: "",
+    password_puesta: null,
+    sesion_epoch: new Date().toISOString(),
+  });
+}
+
+/** Anota que esta cuenta entró recién. */
+export async function tocarUsuario(id: string): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from(TABLAS.usuarios)
+    .update({ ultimo_acceso: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) throw new Error(`No se pudo anotar el acceso: ${error.message}`);
+}
+
+/** Las reservas de una cuenta, la más próxima primero. */
+export async function listarReservasDe(usuarioId: string): Promise<Reserva[]> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.reservas)
+    .select()
+    .eq("usuario_id", usuarioId)
+    .order("fecha", { ascending: false })
+    .order("hora", { ascending: false });
+
+  if (error) throw new Error(`No se pudieron leer tus reservas: ${error.message}`);
+  return (data ?? []) as Reserva[];
+}
+
+/** Las compras de una cuenta, la última primero. */
+export async function listarComprasDe(usuarioId: string): Promise<Compra[]> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.compras)
+    .select()
+    .eq("usuario_id", usuarioId)
+    .order("creada", { ascending: false });
+
+  if (error) throw new Error(`No se pudieron leer tus pedidos: ${error.message}`);
+  return (data ?? []) as Compra[];
+}
+
+/**
+ * Una reserva de esta cuenta, para poder decidir sobre ella. El id lo manda el
+ * navegador, así que la cuenta va en la consulta y no en un `if` de después.
+ */
+export async function buscarReservaDe(
+  usuarioId: string,
+  reservaId: string
+): Promise<Reserva | null> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.reservas)
+    .select()
+    .eq("id", reservaId)
+    .eq("usuario_id", usuarioId)
+    .maybeSingle();
+
+  if (error) throw new Error(`No se pudo leer la reserva: ${error.message}`);
+  return (data as Reserva | null) ?? null;
+}
+
+/** Las cuentas del panel, la última en entrar primero. */
+export async function listarUsuarios(): Promise<Usuario[]> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.usuarios)
+    .select()
+    .order("ultimo_acceso", { ascending: false });
+
+  if (error) throw new Error(`No se pudieron leer las cuentas: ${error.message}`);
+  return (data ?? []) as Usuario[];
 }
 
 /** Las categorías publicadas, en el orden en que se muestran en la tienda. */
@@ -503,19 +729,23 @@ export async function borrarNota(id: string): Promise<void> {
  * Agrega la compra y devuelve el objeto tal como quedó guardado.
  *
  * Nace `pagada` porque la pasarela ya le dio el ok, y por la misma razón que
- * las reservas el insert no pide RETURNING: la tabla no tiene policy de SELECT,
- * así que los pedidos —con sus teléfonos— sólo se leen desde el panel.
+ * las reservas el insert no pide RETURNING ni va con la publishable key: el
+ * pedido y la cuenta de quien compra se guardan en el mismo movimiento.
  */
-export async function crearCompra(datos: NuevaCompra): Promise<Compra> {
+export async function crearCompra(
+  datos: NuevaCompra,
+  usuarioId: string | null = null
+): Promise<Compra> {
   const compra: Compra = {
     id: crypto.randomUUID(),
     codigo: nuevoCodigo("PT"),
+    usuario_id: usuarioId,
     estado: "pagada",
     creada: new Date().toISOString(),
     ...datos,
   };
 
-  const { error } = await supabase().from(TABLAS.compras).insert(compra);
+  const { error } = await supabaseAdmin().from(TABLAS.compras).insert(compra);
   if (error) throw new Error(`No se pudo guardar la compra: ${error.message}`);
 
   return compra;
