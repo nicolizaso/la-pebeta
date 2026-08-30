@@ -14,7 +14,7 @@ import { supabaseAdmin } from "./supabase";
  * cambio, sólo puede hacerlo el panel, porque escribe con la secret key.
  */
 
-export const BUCKET = "pebeta-blog";
+export const BUCKET = "blog";
 
 /** Cinco megas: una foto de teléfono entra, un RAW de cámara no. */
 export const MAX_PESO = 5 * 1024 * 1024;

@@ -31,6 +31,7 @@ Abrí [http://localhost:3000](http://localhost:3000).
   la página a través de Lenis).
 - `assets/imgs/` — originales de cámara, ordenados por área. No se sirven: son el archivo del que sale `public/imgs/`.
 - `public/imgs/` — versiones web (WebP redimensionado) generadas por el script.
+- `supabase/migrations/` — el esquema de la base, en SQL y en orden.
 - `reference/` — prototipo HTML original usado como base del diseño.
 
 ## Datos
@@ -39,21 +40,20 @@ Los datos viven en Postgres, en Supabase. Son seis tablas:
 
 | Tabla | Qué guarda |
 | --- | --- |
-| `pebeta_reservas` | Pedidos de paseo y de mesa, con `estado` (`pendiente` / `confirmada` / `cancelada`) y un `codigo` corto para dictar por teléfono. |
-| `pebeta_productos` | El catálogo de la proveeduría: precio, unidad, stock, su categoría y la clave de su foto en el manifiesto. |
-| `pebeta_categorias` | Los cajones del catálogo, con el orden en que se listan. No hay una lista fija en el código: se cargan desde el panel y el `id` sale del nombre (`quesos-de-tambo`). |
-| `pebeta_compras` | Las compras de la tienda, con sus ítems, el total y el `estado` (`pagada` / `entregada` / `cancelada`). |
-| `pebeta_horarios` | Los horarios de atención: una fila por área (`proveeduria` / `restaurant`) y día de la semana. |
-| `pebeta_notas` | Las notas del blog: título, `slug` (la URL), bajada, cuerpo, firma, `etiquetas`, foto, `publicada` y `fecha`, que es cuándo sale y la que lleva la nota. |
+| `reservas` | Pedidos de paseo y de mesa, con `estado` (`pendiente` / `confirmada` / `cancelada`) y un `codigo` corto para dictar por teléfono. |
+| `productos` | El catálogo de la proveeduría: precio, unidad, stock, su categoría y la clave de su foto en el manifiesto. |
+| `categorias` | Los cajones del catálogo, con el orden en que se listan. No hay una lista fija en el código: se cargan desde el panel y el `id` sale del nombre (`quesos-de-tambo`). |
+| `compras` | Las compras de la tienda, con sus ítems, el total y el `estado` (`pagada` / `entregada` / `cancelada`). |
+| `horarios` | Los horarios de atención: una fila por área (`proveeduria` / `restaurant`) y día de la semana. |
+| `notas` | Las notas del blog: título, `slug` (la URL), bajada, cuerpo, firma, `etiquetas`, foto, `publicada` y `fecha`, que es cuándo sale y la que lleva la nota. |
 
-Hay además un bucket de Storage, `pebeta-blog`, con las fotos que se suben
-desde el panel para una nota. Es público —lo que guarda se ve en el blog— y
-acepta hasta 5 MB por imagen, en JPG, PNG, WebP o AVIF. Escribir en él necesita
+Hay además un bucket de Storage, `blog`, con las fotos que se suben desde el
+panel para una nota. Es público —lo que guarda se ve en el blog— y acepta hasta
+5 MB por imagen, en JPG, PNG, WebP o AVIF. Escribir en él necesita
 la secret key, así que sólo puede hacerlo el panel.
 
-Van con prefijo porque, por ahora, comparten proyecto de Supabase con otra app.
-Cuando La Pebeta tenga el suyo, se cambian el prefijo y las variables de
-entorno y no hay nada más que tocar: `lib/db.ts` es el único módulo que habla
+El esquema está en `supabase/migrations/`, y es la fuente de verdad: las tablas
+no se crean a mano desde el dashboard. `lib/db.ts` es el único módulo que habla
 con la base, y de ahí salen los tipos y las funciones que usan la API, el
 formulario y el panel.
 
@@ -97,9 +97,9 @@ precio máximo y un filtro de stock, y al lado la grilla. El catálogo entero
 así que buscar y filtrar no vuelve al server. La página no se cachea: lo que
 muestra incluye el stock.
 
-Las categorías del aside son las filas de `pebeta_categorias` que tienen algo
-adentro: una que se crea en el panel aparece en cuanto se le publica el primer
-producto, y una vacía no ocupa un renglón que siempre saldría en cero. Como los
+Las categorías del aside son las filas de `categorias` que tienen algo adentro:
+una que se crea en el panel aparece en cuanto se le publica el primer producto,
+y una vacía no ocupa un renglón que siempre saldría en cero. Como los
 productos cuelgan de su categoría, esconder una en el panel saca del catálogo
 todo lo que tiene adentro —también de `POST /api/compras`, que valida contra el
 mismo catálogo—, y volver a mostrarla lo trae entero, sin haber tocado producto
@@ -110,17 +110,17 @@ contra el catálogo del día: si un producto ya no está o bajó el stock, la
 cantidad se recorta en vez de romper el pedido.
 
 `POST /api/compras` cierra la compra. Lo que viaja son ids y cantidades: los
-nombres, los precios y el total se recalculan en el server contra
-`pebeta_productos` y quedan copiados en la fila, para que el ticket no cambie
-si después se toca el catálogo.
+nombres, los precios y el total se recalculan en el server contra `productos` y
+quedan copiados en la fila, para que el ticket no cambie si después se toca el
+catálogo.
 
 **El pago es ficticio y lo dice en pantalla.** No hay pasarela ni cobro: con
 los cuatro campos de la tarjeta vacíos la compra se cierra igual, que es la
 idea para poder probar el circuito de punta a punta. Lo que sí se revisa es lo
 que se haya escrito —Luhn sobre el número, `MM/AA` sin vencer, código de 3 o 4
 dígitos—, así el formulario se comporta como uno de verdad cuando alguien carga
-datos. Nada de la tarjeta se guarda ni sale del request: `pebeta_compras` tiene
-quién compró, qué se lleva y cuánto, y nada más.
+datos. Nada de la tarjeta se guarda ni sale del request: `compras` tiene quién
+compró, qué se lleva y cuánto, y nada más.
 
 ## Blog
 
@@ -149,7 +149,7 @@ quien escribe, que es lo más común cuando la foto se sacó esa misma mañana.
 Esas van al bucket de Supabase y la nota se guarda con su URL.
 
 **Una nota se puede dejar cargada con fecha de más adelante y sale sola ese
-día.** No hay cron, ni cola, ni un deploy que la traiga: `pebeta_notas` guarda
+día.** No hay cron, ni cola, ni un deploy que la traiga: `notas` guarda
 `publicada` y `fecha`, y "está a la vista" es `publicada and fecha <= now()`.
 Esa condición está dos veces, como las reglas de las reservas y las de la
 tienda: en la consulta de `lib/db.ts` y como policy de la tabla, así una nota

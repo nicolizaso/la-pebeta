@@ -5,8 +5,8 @@ import { normalizar } from "./tienda";
  * Las reglas del blog, del mismo lado que las del catálogo: las usa el
  * formulario del panel —para avisar antes de mandar— y la server action, que es
  * la que realmente decide. Las mismas cotas están como constraints de
- * `pebeta_notas`, así que acá están para poder explicar qué está mal, no para
- * ser la única defensa.
+ * `notas`, así que acá están para poder explicar qué está mal, no para ser la
+ * única defensa.
  *
  * Este módulo lo importa código de cliente, así que no puede tocar la base ni
  * el manifiesto de fotos: las fotos que hay se le pasan como lista.

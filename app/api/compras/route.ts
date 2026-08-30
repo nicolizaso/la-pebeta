@@ -3,7 +3,7 @@ import { crearCompra, listarCatalogo } from "@/lib/db";
 import { validarCompra } from "@/lib/tienda";
 
 /**
- * El cierre de la compra: cada POST agrega una fila a `pebeta_compras`.
+ * El cierre de la compra: cada POST agrega una fila a `compras`.
  *
  * El carrito manda qué producto y cuántos; los precios y el total se calculan
  * acá contra el catálogo, así que lo que se guarda no depende de lo que haya
