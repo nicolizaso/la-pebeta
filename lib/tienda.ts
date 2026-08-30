@@ -228,8 +228,13 @@ export function validarCompra(cuerpo: unknown, catalogo: Producto[]): ResultadoC
     return { ok: false, error: "Dejanos un teléfono para avisarte cuando esté listo.", campo: "telefono" };
   }
 
-  const email = texto(cliente.email);
-  if (email && !RE_EMAIL.test(email)) {
+  // el mail dejó de ser opcional, igual que en una reserva: con él se arma la
+  // cuenta desde la que después se ve el pedido en el perfil
+  const email = texto(cliente.email).toLowerCase();
+  if (!email) {
+    return { ok: false, error: "Dejanos tu mail: con eso vas a ver tu pedido.", campo: "email" };
+  }
+  if (email.length > 120 || !RE_EMAIL.test(email)) {
     return { ok: false, error: "Ese mail no parece válido.", campo: "email" };
   }
 

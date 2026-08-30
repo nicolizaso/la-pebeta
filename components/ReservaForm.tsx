@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import Link from "next/link";
 import { WHATSAPP } from "@/lib/contacto";
 import type { ReservaTipo } from "@/lib/db";
 import { REGLAS } from "@/lib/reservas";
@@ -8,11 +9,20 @@ import { REGLAS } from "@/lib/reservas";
 type Estado =
   | { paso: "form"; error?: string }
   | { paso: "enviando" }
-  | { paso: "listo"; codigo: string; nombre: string };
+  | {
+      paso: "listo";
+      codigo: string;
+      nombre: string;
+      /** ¿Quedó la sesión abierta? Pasa cuando la cuenta no tiene contraseña. */
+      entro: boolean;
+      /** Ya había cuenta con ese mail y tiene contraseña: hay que entrar. */
+      conContrasena: boolean;
+    };
 
 /**
- * Alta de una reserva. Postea a /api/reservas, que es lo que agrega el objeto
- * nuevo a data/db.json; si eso falla queda WhatsApp como salida.
+ * Alta de una reserva. Postea a /api/reservas, que además de guardarla abre la
+ * cuenta de quien reserva con el mail del formulario; si eso falla queda
+ * WhatsApp como salida.
  */
 export function ReservaForm({
   tipo,
@@ -56,7 +66,13 @@ export function ReservaForm({
         setEstado({ paso: "form", error: datos.error ?? "No pudimos tomar la reserva." });
         return;
       }
-      setEstado({ paso: "listo", codigo: datos.reserva.codigo, nombre: datos.reserva.nombre });
+      setEstado({
+        paso: "listo",
+        codigo: datos.reserva.codigo,
+        nombre: datos.reserva.nombre,
+        entro: Boolean(datos.cuenta?.entro),
+        conContrasena: Boolean(datos.cuenta?.conContrasena),
+      });
     } catch {
       setEstado({
         paso: "form",
@@ -77,8 +93,28 @@ export function ReservaForm({
           Guardamos tu pedido con el código <strong>{estado.codigo}</strong>. Queda pendiente hasta
           que te confirmemos el cupo por WhatsApp.
         </p>
+        {estado.entro ? (
+          <p className="reserva-form-nota">
+            Te dejamos la cuenta abierta: en tu perfil vas a ver ésta y todas las que pidas.
+          </p>
+        ) : estado.conContrasena ? (
+          <p className="reserva-form-nota">
+            Ya tenías una cuenta con ese mail. Entrá a tu perfil con tu contraseña y ahí la vas a
+            ver.
+          </p>
+        ) : null}
         <div className="reserva-form-acciones">
-          <a className="btn primary" href={WHATSAPP} target="_blank" rel="noreferrer">
+          {estado.entro || estado.conContrasena ? (
+            <Link className="btn primary" href="/perfil">
+              {estado.entro ? "Ver mis reservas" : "Entrar a mi perfil"}
+            </Link>
+          ) : null}
+          <a
+            className={`btn ${estado.entro || estado.conContrasena ? "ghost" : "primary"}`}
+            href={WHATSAPP}
+            target="_blank"
+            rel="noreferrer"
+          >
             Escribinos por WhatsApp
           </a>
           <button type="button" className="btn ghost" onClick={() => setEstado({ paso: "form" })}>
@@ -109,8 +145,9 @@ export function ReservaForm({
           <input id={`${id}-telefono`} name="telefono" type="tel" required autoComplete="tel" />
         </p>
         <p className="campo">
-          <label htmlFor={`${id}-email`}>Mail (opcional)</label>
-          <input id={`${id}-email`} name="email" type="email" autoComplete="email" />
+          <label htmlFor={`${id}-email`}>Mail</label>
+          <input id={`${id}-email`} name="email" type="email" required autoComplete="email" />
+          <span className="pista">Con esto ves tus reservas</span>
         </p>
         <p className="campo">
           <label htmlFor={`${id}-fecha`}>Fecha</label>

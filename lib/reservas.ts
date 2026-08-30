@@ -1,4 +1,5 @@
-import type { ReservaTipo } from "./db";
+import type { Reserva, ReservaTipo } from "./db";
+import { desdeElReloj } from "./fechas";
 
 /**
  * Las reglas de una reserva viven acá porque las usan los dos lados: el
@@ -76,8 +77,13 @@ export function validarReserva(cuerpo: unknown): Resultado {
     return { ok: false, error: "Dejanos un teléfono para confirmarte.", campo: "telefono" };
   }
 
-  const email = texto(datos.email);
-  if (email && !RE_EMAIL.test(email)) {
+  // el mail dejó de ser opcional: es con lo que se arma la cuenta y con lo que
+  // después se entra al perfil a ver esta misma reserva
+  const email = texto(datos.email).toLowerCase();
+  if (!email) {
+    return { ok: false, error: "Dejanos tu mail: con eso vas a ver tu reserva.", campo: "email" };
+  }
+  if (email.length > 120 || !RE_EMAIL.test(email)) {
     return { ok: false, error: "Ese mail no parece válido.", campo: "email" };
   }
 
@@ -114,4 +120,50 @@ export function validarReserva(cuerpo: unknown): Resultado {
   }
 
   return { ok: true, datos: { tipo, nombre, telefono, email, fecha, hora, personas, comentarios } };
+}
+
+/* ---------- cancelar desde el perfil ----------
+   La casa cancela cuando quiere, desde el panel. Quien reservó puede hacerlo
+   solo hasta unas horas antes: después ya hay una mesa levantada o un paseo
+   armado, y eso se habla. */
+
+/** Cuánto tiempo antes se puede soltar una reserva sin llamar. */
+export const HORAS_PARA_CANCELAR = 24;
+
+/** Cuándo empieza la reserva, como instante. Null si la fila vino rara. */
+export function momentoDe(reserva: Pick<Reserva, "fecha" | "hora">): Date | null {
+  const iso = desdeElReloj(`${reserva.fecha}T${reserva.hora}`);
+  return iso ? new Date(iso) : null;
+}
+
+type Cancelacion = { ok: true } | { ok: false; error: string };
+
+/**
+ * ¿Puede esta persona cancelar esta reserva ahora?
+ *
+ * La usan la vista del perfil —para mostrar el botón o explicar por qué no
+ * está— y la action que cancela de verdad, que vuelve a preguntar porque una
+ * server action es un endpoint como cualquier otro.
+ */
+export function sePuedeCancelar(reserva: Reserva, ahora = new Date()): Cancelacion {
+  if (reserva.estado === "cancelada") {
+    return { ok: false, error: "Esa reserva ya está cancelada." };
+  }
+
+  const momento = momentoDe(reserva);
+  if (!momento) return { ok: false, error: "No pudimos leer la fecha de esa reserva." };
+
+  if (momento.getTime() <= ahora.getTime()) {
+    return { ok: false, error: "Esa reserva ya pasó." };
+  }
+
+  const horas = (momento.getTime() - ahora.getTime()) / 3_600_000;
+  if (horas < HORAS_PARA_CANCELAR) {
+    return {
+      ok: false,
+      error: `Faltan menos de ${HORAS_PARA_CANCELAR} horas. Escribinos por WhatsApp y la damos de baja nosotros.`,
+    };
+  }
+
+  return { ok: true };
 }
