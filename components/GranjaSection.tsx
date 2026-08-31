@@ -15,7 +15,7 @@ export function GranjaSection() {
             polinizan, aves y animales de pastoreo que ayudan a capturar carbono del ambiente. El
             diseño de nuestro territorio está pensado desde la permacultura.
           </p>
-          <LinkArrow href="/#paseos">Conocer la granja</LinkArrow>
+          <LinkArrow href="/granja">Conocer la granja</LinkArrow>
         </div>
         <div className="granja-gallery">
           <Photo

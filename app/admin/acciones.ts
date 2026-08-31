@@ -20,6 +20,7 @@ import {
   guardarHorarios,
   guardarSeccion,
   listarCategoriasDelPanel,
+  olvidarContrasena,
   publicarNota,
   publicarProducto,
   slugLibre,
@@ -104,6 +105,24 @@ export async function cambiarEstadoDeCompra(datos: FormData): Promise<void> {
   await cambiarEstadoCompra(id, estado);
   revalidatePath("/admin/compras");
   revalidatePath("/admin");
+}
+
+/**
+ * Le saca la contraseña a una cuenta.
+ *
+ * Es la salida para quien se la olvidó: no hay mail de reseteo —el sitio no
+ * manda mails—, así que esa persona escribe o llama, y desde acá su cuenta
+ * vuelve a entrar con sólo el mail, como el día que se abrió. Las sesiones que
+ * tuviera abiertas se caen en el momento.
+ */
+export async function olvidarContrasenaDeCuenta(datos: FormData): Promise<void> {
+  if (!(await haySesion())) return;
+
+  const id = texto(datos.get("id"));
+  if (!id) return;
+
+  await olvidarContrasena(id);
+  revalidatePath("/admin/usuarios");
 }
 
 /** Guarda la semana completa de un área: es lo que manda el formulario. */

@@ -291,6 +291,20 @@ nav.links a.cta {
 .nav-toggle {
   display: none;
 }
+/* Con las páginas de sección adentro, el renglón del menú quedó largo: se
+   aprieta un poco antes de que lo tome el menú de hamburguesa. */
+@media (min-width: 861px) and (max-width: 1180px) {
+  nav.links {
+    gap: 14px;
+  }
+  nav.links a {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+  nav.links a.cta {
+    padding: 7px 12px;
+  }
+}
 
 /* ---------- hero ---------- */
 .hero {
@@ -2399,6 +2413,278 @@ body:has(.nota-portada) header.site:not(.scrolled) .nav-toggle span {
 }
 .blog-otras .section-title {
   font-size: clamp(28px, 3.4vw, 44px);
+}
+
+/* ---------- perfil ----------
+   Lo que reservó, compró y cargó cada persona. Toma la portada del blog —la
+   página arranca oscura para que la barra de navegación se lea— y de ahí para
+   abajo son bloques sobre papel, en la misma medida que el resto del sitio. */
+.perfil-portada {
+  background: var(--moss-deep);
+  color: var(--paper-light);
+  padding: clamp(116px, 14vw, 168px) 0 clamp(38px, 5vw, 64px);
+}
+.perfil-portada .eyebrow {
+  color: var(--wheat);
+}
+.perfil-portada .eyebrow::before {
+  background: var(--wheat);
+}
+.perfil-portada h1 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(36px, 5vw, 66px);
+  line-height: 1.04;
+  margin: 0 0 12px;
+  max-width: 17ch;
+}
+.perfil-portada p {
+  margin: 0;
+  max-width: 54ch;
+  font-size: 16px;
+  line-height: 1.66;
+  color: rgba(250, 247, 239, 0.8);
+}
+/* "cerrar sesión" es un link más, no un botón: se usa una vez cada tanto */
+.perfil-salir {
+  margin-top: 20px;
+}
+.perfil-salir button {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(250, 247, 239, 0.62);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(250, 247, 239, 0.3);
+  padding: 0 0 3px;
+  cursor: pointer;
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+.perfil-salir button:hover {
+  color: var(--paper-light);
+  border-color: var(--paper-light);
+}
+
+.perfil-cuerpo {
+  padding: clamp(40px, 5vw, 70px) 0 clamp(70px, 9vw, 120px);
+}
+/* la puerta es un formulario solo en la página: no compite con nada */
+.perfil-puerta-wrap {
+  max-width: 520px;
+}
+.perfil-caido {
+  margin: 0 0 clamp(28px, 3.5vw, 44px);
+  padding: 16px 18px;
+  border: 1px solid rgba(168, 85, 46, 0.4);
+  background: rgba(168, 85, 46, 0.07);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.perfil-caido code {
+  font-family: var(--ff-mono);
+  font-size: 13.5px;
+}
+
+.perfil-bloque {
+  padding-top: clamp(30px, 4vw, 48px);
+}
+.perfil-bloque + .perfil-bloque {
+  margin-top: clamp(30px, 4vw, 48px);
+  border-top: 1px solid var(--line);
+}
+.perfil-bloque h2 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.1;
+  margin: 0 0 22px;
+}
+.perfil-vacio {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.66;
+  color: rgba(35, 40, 31, 0.7);
+}
+.perfil-vacio a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Cada reserva y cada pedido, en tres columnas: cuándo, qué y en qué anda.
+   Es la misma fila para las dos cosas —una reserva tiene fecha y una compra
+   tiene momento— así que la lista no cambia de forma a mitad de la página. */
+.perfil-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+.perfil-item {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.9fr) minmax(0, 2fr) auto;
+  gap: 18px;
+  align-items: start;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+/* el historial se lee, no se atiende */
+.perfil-lista.apagada .perfil-item {
+  color: rgba(35, 40, 31, 0.6);
+}
+.perfil-item-cuando,
+.perfil-item-que,
+.perfil-item-estado {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.perfil-item-estado {
+  align-items: flex-end;
+  gap: 9px;
+}
+.perfil-item-cuando strong {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.3;
+}
+.perfil-item-cuando span {
+  font-family: var(--ff-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  color: rgba(35, 40, 31, 0.55);
+}
+.perfil-item-tipo {
+  font-size: 16px;
+  line-height: 1.3;
+}
+.perfil-item-detalle {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(35, 40, 31, 0.62);
+}
+.perfil-item-nota {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(35, 40, 31, 0.5);
+  font-style: italic;
+}
+/* el código se dicta por teléfono: no se parte en dos renglones */
+.perfil-codigo {
+  font-family: var(--ff-mono);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: rgba(35, 40, 31, 0.7);
+}
+.perfil-estado {
+  display: inline-block;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+.perfil-estado.pendiente {
+  color: var(--clay);
+  border-color: rgba(168, 85, 46, 0.45);
+  background: rgba(168, 85, 46, 0.08);
+}
+.perfil-estado.pagada {
+  color: #7a5b0f;
+  border-color: rgba(201, 162, 39, 0.5);
+  background: rgba(201, 162, 39, 0.14);
+}
+.perfil-estado.confirmada,
+.perfil-estado.entregada {
+  color: var(--moss-deep);
+  border-color: rgba(73, 87, 60, 0.45);
+  background: rgba(73, 87, 60, 0.1);
+}
+.perfil-estado.cancelada {
+  color: rgba(35, 40, 31, 0.45);
+}
+
+.perfil-cancelar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.perfil-btn {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.65);
+  background: none;
+  border: 1px solid var(--line);
+  padding: 7px 12px;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+}
+.perfil-btn:hover {
+  color: var(--paper-light);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.perfil-btn[disabled] {
+  opacity: 0.55;
+  cursor: progress;
+}
+.perfil-cancelar-error {
+  font-size: 12.5px;
+  line-height: 1.4;
+  text-align: right;
+  max-width: 26ch;
+  color: var(--clay);
+}
+
+/* los dos formularios de "tus datos": los campos son los del sitio */
+.perfil-form {
+  max-width: 560px;
+}
+.perfil-nota {
+  margin: 0 0 20px;
+  max-width: 62ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(35, 40, 31, 0.72);
+}
+/* siempre ocupa su renglón, así el formulario no salta cuando aparece el aviso */
+.perfil-aviso {
+  min-height: 1.5em;
+  margin: 14px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--clay);
+}
+.perfil-aviso.bien {
+  color: var(--moss);
+}
+
+@media (max-width: 700px) {
+  /* la fila se desarma: primero cuándo y qué, y el estado al pie a la izquierda */
+  .perfil-item {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .perfil-item-estado {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .perfil-cancelar {
+    align-items: flex-start;
+  }
+  .perfil-cancelar-error {
+    text-align: left;
+  }
 }
 
 /* ---------- próximamente: una sección que todavía no abrió ----------

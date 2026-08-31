@@ -6,6 +6,9 @@ import { seccionesActivas } from "@/lib/secciones";
 const LINKS: (NavLink & { seccion?: Seccion })[] = [
   { href: "/", label: "Inicio" },
   { href: "/restaurant", label: "Restaurant" },
+  { href: "/granja", label: "Granja" },
+  { href: "/huerta", label: "Huerta" },
+  { href: "/paseos", label: "Paseos" },
   { href: "/tienda", label: "Tienda", seccion: "tienda" },
   { href: "/blog", label: "Blog", seccion: "blog" },
 ];
@@ -20,7 +23,9 @@ const LINKS: (NavLink & { seccion?: Seccion })[] = [
  *
  * Por esta lectura las páginas que muestran el menú se arman en cada visita
  * (`dynamic = "force-dynamic"`): prender la tienda tiene que verse en el menú
- * enseguida, sin esperar un deploy.
+ * enseguida, sin esperar un deploy. "Mi perfil" sigue resolviéndose en el
+ * navegador —está en `HeaderNav`—, porque eso cambia por visitante y no por
+ * sitio.
  */
 export async function Header() {
   const activas = await seccionesActivas();

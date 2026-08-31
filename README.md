@@ -20,16 +20,18 @@ Abrí [http://localhost:3000](http://localhost:3000).
 
 ## Estructura
 
-- `app/` — layout, páginas (home, `/restaurant`, `/reservas`, `/tienda` y
-  `/blog`), el panel (`app/admin/`), la API (`app/api/`) y estilos globales.
+- `app/` — layout, páginas (home, `/restaurant`, `/reservas`, `/tienda`,
+  `/blog` y `/perfil`), el panel (`app/admin/`), la API (`app/api/`) y estilos
+  globales.
 - `components/` — una pieza por sección, más `Photo` (la primitiva de imagen), `Lightbox` (visor a pantalla completa) y `SiteAnimations`, que centraliza Lenis + GSAP ScrollTrigger. En `components/admin/` van las del panel, en `components/tienda/` las del catálogo y el carrito y en `components/blog/` las de las notas.
 - `lib/` — `photos.ts` y el manifiesto generado de imágenes, `db.ts` (los tipos
   y el acceso a la base), `supabase.ts` (la conexión), `subidas.ts` (las fotos
   que se suben desde el panel), `reservas.ts`, `horarios.ts`, `tienda.ts`,
   `productos.ts` y `blog.ts` (las reglas de cada uno), `secciones.ts` (qué
   secciones del sitio están abiertas), `admin.ts` (la puerta del panel),
-  `fechas.ts`, `contacto.ts` y `smooth-scroll.ts` (el puente para mover la
-  página a través de Lenis).
+  `sesion.ts` y `usuarios.ts` (las cuentas de quienes reservan: la cookie
+  firmada y las contraseñas), `fechas.ts`, `contacto.ts` y `smooth-scroll.ts`
+  (el puente para mover la página a través de Lenis).
 - `assets/imgs/` — originales de cámara, ordenados por área. No se sirven: son el archivo del que sale `public/imgs/`.
 - `public/imgs/` — versiones web (WebP redimensionado) generadas por el script.
 - `supabase/migrations/` — el esquema de la base, en SQL y en orden.
@@ -41,10 +43,11 @@ Los datos viven en Postgres, en Supabase. Son siete tablas:
 
 | Tabla | Qué guarda |
 | --- | --- |
-| `reservas` | Pedidos de paseo y de mesa, con `estado` (`pendiente` / `confirmada` / `cancelada`) y un `codigo` corto para dictar por teléfono. |
+| `reservas` | Pedidos de paseo y de mesa, con `estado` (`pendiente` / `confirmada` / `cancelada`), un `codigo` corto para dictar por teléfono y el `usuario_id` de quien la tomó. |
+| `usuarios` | Las cuentas. Nadie se registra: nacen solas con la primera reserva o compra, y el mail es la llave. `password_hash` está vacío hasta que esa persona se pone una contraseña desde su perfil. |
 | `productos` | El catálogo de la proveeduría: precio, unidad, stock, su categoría y la clave de su foto en el manifiesto. |
 | `categorias` | Los cajones del catálogo, con el orden en que se listan. No hay una lista fija en el código: se cargan desde el panel y el `id` sale del nombre (`quesos-de-tambo`). |
-| `compras` | Las compras de la tienda, con sus ítems, el total y el `estado` (`pagada` / `entregada` / `cancelada`). |
+| `compras` | Las compras de la tienda, con sus ítems, el total, el `estado` (`pagada` / `entregada` / `cancelada`) y el `usuario_id` de quien compró. |
 | `horarios` | Los horarios de atención: una fila por área (`proveeduria` / `restaurant`) y día de la semana. |
 | `notas` | Las notas del blog: título, `slug` (la URL), bajada, cuerpo, firma, `etiquetas`, foto, `publicada` y `fecha`, que es cuándo sale y la que lleva la nota. |
 | `secciones` | Una fila por sección que se puede apagar (`tienda`, `blog`) con su `activa`. Es lo que mira el menú antes de mostrar un link y cada página antes de mostrarse. |
@@ -64,19 +67,28 @@ formulario y el panel.
 ```bash
 SUPABASE_URL=https://<proyecto>.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_…
-SUPABASE_SECRET_KEY=sb_secret_…        # sólo la usa /admin
+SUPABASE_SECRET_KEY=sb_secret_…        # el panel, el alta de reservas y el perfil
 ADMIN_PASSWORD=…                       # la clave del panel
+SESION_SECRET=…                        # firma las sesiones de /perfil
 ```
 
 En local van en `.env.local`; en Vercel, en las environment variables del
 proyecto. La publishable key es pública a propósito: lo que se puede hacer con
-ella lo decide RLS, y es dejar una reserva —que entra siempre como
-`pendiente`—, dejar una compra —que entra siempre como `pagada` y con al menos
-un ítem—, leer el catálogo publicado con sus categorías, leer los horarios,
-leer las notas del blog que ya salieron y leer qué secciones están abiertas. Listar reservas y compras,
+ella lo decide RLS, y es leer el catálogo publicado con sus categorías, leer
+los horarios, leer las notas del blog que ya salieron y leer qué secciones del
+sitio están abiertas. Todo lo demás va con la secret key, siempre del lado del
+server: listar reservas y compras,
 confirmarlas, cancelarlas, marcarlas entregadas, cargar horarios, subir una
-foto y ver un borrador o una nota programada necesita la secret key, que sólo
-se usa del lado del server y sólo desde el panel.
+foto, ver un borrador o una nota programada, y —desde que las reservas tienen
+dueño— darlas de alta, porque la reserva y la cuenta de quien reserva se
+guardan en el mismo movimiento. Las policies de alta pública de `reservas` y
+`compras` siguen en la base, pero el sitio ya no las usa.
+
+`SESION_SECRET` firma la cookie del perfil. Sin ella el server firma con un
+secreto al azar que dura lo que dura el proceso: en local se entra igual y lo
+único que pasa es que un `next dev` que se reinicia pide volver a entrar, pero
+en producción hay que ponerla —si no, cada instancia firma distinto y las
+sesiones se caen solas—. El perfil lo avisa en pantalla cuando falta.
 
 Las reglas del negocio están dos veces a propósito: en `lib/reservas.ts` y
 `lib/tienda.ts`, que es lo que valida la API, y como constraints de la tabla
@@ -90,6 +102,11 @@ contra la base de forma directa.
 código. El formulario de `/reservas` es el que lo llama, tanto para paseos como
 para mesas. No hay GET: el listado tiene teléfonos y mails, así que sale por el
 panel, que lee del lado del server con la secret key.
+
+El mail dejó de ser opcional: es con lo que se arma la cuenta. En el mismo POST
+se busca o se crea el usuario de ese mail y la reserva nace con su `usuario_id`
+—ver [Cuentas y perfil](#cuentas-y-perfil)—. Si el alta de la cuenta falla, la
+reserva se guarda igual, sin dueño: primero está atender a quien reserva.
 
 ## Tienda
 
@@ -194,6 +211,51 @@ dice "Próximamente"; abierto de más es una tienda a la venta sin que nadie la
 haya prendido. Por esta consulta las páginas que muestran el menú se arman en
 cada visita, así prender la tienda se ve enseguida y no en el próximo deploy.
 
+## Cuentas y perfil
+
+Nadie se registra en este sitio: se reserva. Con el mail de esa reserva queda
+hecha la cuenta, y desde `/perfil` esa persona ve lo que pidió, lo que compró y
+puede corregir sus datos o soltar una reserva.
+
+La cuenta nace **sin contraseña**, y mientras siga así se entra con sólo
+escribir el mail. Es a propósito: es la única forma de que alguien que acaba de
+reservar entre a ver su reserva sin inventar nada. Tiene el costo evidente
+—quien escriba un mail ajeno ve esas reservas— y por eso el perfil ofrece
+ponerse una contraseña, que es lo que cierra esa puerta cuenta por cuenta:
+
+- **Al reservar o comprar**, si la cuenta no tiene contraseña, la sesión queda
+  abierta sola y la pantalla de "listo" lleva al perfil.
+- **Si ya tiene contraseña**, la reserva se toma igual pero la sesión no se
+  abre: se entra por `/perfil`, con la contraseña. Si no fuera así, alcanzaría
+  con cargar una reserva para saltearla.
+- **En `/perfil` sin sesión** se escribe el mail; la contraseña se pide sólo si
+  esa cuenta tiene una.
+- **Poner o cambiar la contraseña** le sube el `sesion_epoch` a la fila, y con
+  eso caducan todas las sesiones abiertas menos la que la está poniendo. Es lo
+  que echa a quien hubiera entrado antes con sólo el mail.
+- **Si se la olvida** no hay mail de reseteo, porque el sitio no manda mails:
+  esa persona llama, y desde el panel (sección Cuentas) se le borra la
+  contraseña. Su cuenta vuelve a entrar con el mail, como el día que nació.
+
+No usa Supabase Auth a propósito. Todo el acceso a los datos del sitio ya pasa
+por el server con la secret key, así que una tabla propia y una cookie firmada
+alcanzan, sin traer el cliente de auth al navegador ni reescribir las policies
+con `auth.uid()`. La sesión es una cookie httpOnly `pebeta_usuario` con el id
+del usuario, el epoch y una firma HMAC (`lib/sesion.ts`), y las contraseñas se
+guardan con scrypt, sal propia por cuenta (`lib/usuarios.ts`). La acompaña una
+segunda cookie, `pebeta_sesion`, que no está firmada y no dice quién es nadie:
+existe sólo para que la barra de navegación muestre "Mi perfil" sin que las
+páginas del sitio tengan que leer cookies del lado del server: el menú se arma
+igual para todo el mundo —lo único que mira es qué secciones están abiertas— y
+lo que cambia por visitante se resuelve en el navegador.
+
+El perfil lee con la secret key filtrando por la cuenta de la sesión —
+`reservas` y `compras` no tienen policy de lectura y no la van a tener— y cada
+server action vuelve a preguntar quién es: el id de una reserva nunca alcanza
+para tocarla, se busca por reserva *y* por cuenta. Cancelar se puede hasta
+24 horas antes (`HORAS_PARA_CANCELAR` en `lib/reservas.ts`); más cerca de la
+fecha, la pantalla manda a WhatsApp.
+
 ## Panel
 
 `/admin` —se entra por el botón del pie del sitio— es la parte de adentro. Un
@@ -204,6 +266,7 @@ aside con las secciones y, al lado, la que esté abierta:
 | Resumen | Lo que hay tomado de hoy en adelante —pendientes, reservas del día, personas anotadas— más lo vendido en la tienda en los últimos 30 días y los pedidos que faltan entregar. |
 | Reservas | Paseos y mesas en la misma tabla, con filtros por qué, cuándo y estado, y los botones para confirmar, cancelar o reabrir. |
 | Compras | Los pedidos de la tienda, lo último primero, con el detalle de cada uno y su total. Entran `pagada`: se marcan entregadas cuando la persona pasó a retirar, o canceladas si no pasó. |
+| Cuentas | Quiénes reservan, con buscador por mail, nombre o teléfono. Lo único que se hace desde acá es borrarle la contraseña a quien se la olvidó, para que vuelva a entrar con el mail. |
 | Productos | El catálogo entero, publicado o no, con filtros por categoría, estado y buscador. Se carga, se edita, se publica, se esconde y se borra. Arriba está el interruptor que abre o cierra la tienda en el sitio. |
 | Categorías | Los cajones de la tienda: nombre, bajada, orden y si están a la vista. Se puede crear una sin pasar por acá, desde el select del formulario de un producto. |
 | Blog | Las notas: se escriben, se guardan de borrador, se publican, se sacan y se borran, con filtros por estado y buscador. Arriba está el interruptor que abre o cierra el blog en el sitio. Llevan etiquetas —la primera es su sección—, la dirección sale del título y la foto se sube o se elige de la galería. Una nota con fecha de más adelante queda programada y sale sola ese día. |
