@@ -3406,11 +3406,22 @@ footer .fine {
   color: var(--clay);
 }
 
-/* el índice de secciones: un botón por sección, el de la abierta en negativo */
+/* el índice de secciones: un botón por sección, el de la abierta en negativo.
+   Es lo único que scrollea del aside: si las secciones no entran en la pantalla
+   se desplazan acá adentro y el pie queda siempre a la vista */
 .admin-nav {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  /* el canal de la barra sale del padding del aside, así los botones
+     no se angostan cuando aparece */
+  padding-right: 6px;
+  margin-right: -6px;
 }
 .admin-nav-btn {
   display: flex;
@@ -3443,8 +3454,12 @@ footer .fine {
   color: rgba(250, 247, 239, 0.6);
 }
 
+/* el pie va clavado abajo del aside, no arrastrado por el índice */
 .admin-aside-pie {
+  flex: none;
   margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -4630,9 +4645,14 @@ footer .fine {
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
+  /* acá el aside crece con la página: nada scrollea por dentro */
   .admin-nav {
     flex-direction: row;
     flex-wrap: wrap;
+    flex: 0 0 auto;
+    overflow: visible;
+    padding-right: 0;
+    margin-right: 0;
   }
   .admin-nav-btn {
     flex: 1 1 150px;
@@ -4640,6 +4660,8 @@ footer .fine {
   .admin-aside-pie {
     flex-direction: row;
     gap: 20px;
+    padding-top: 0;
+    border-top: 0;
   }
   /* la fecha y el estado arriba, el nombre debajo */
   .admin-proximas li {
