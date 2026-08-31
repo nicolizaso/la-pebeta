@@ -1,10 +1,10 @@
 import type { PhotoKey } from "./photos";
 
 /**
- * Las dos experiencias de La Pebeta, en un solo lugar.
+ * Los dos paseos de La Pebeta, en un solo lugar.
  *
  * Los mismos datos —los días, la duración, el costo, lo que hace falta para
- * venir— se muestran en la página de experiencias, en la home y en la de
+ * venir— se muestran en la página de paseos, en la home y en la de
  * reservas. Están acá para que no se contradigan entre pantallas: si cambia el
  * precio o el horario, se cambia una vez.
  */
@@ -12,22 +12,24 @@ import type { PhotoKey } from "./photos";
 /** Lo que sale el recorrido por la granja, por persona. Los chicos no pagan. */
 export const PRECIO_GRANJA = 18_000;
 
-/** Viernes, sábados y domingos, a las 11. Las dos experiencias salen juntas. */
+/** Viernes, sábados y domingos, a las 11. Los dos salen juntos. */
 export const DIAS_TEXTO = "Viernes, sábados y domingos";
 export const HORA_SALIDA = "11:00";
 
-export type ExperienciaId = "huerta" | "granja";
+export type PaseoId = "huerta" | "granja";
 
-export type Experiencia = {
-  id: ExperienciaId;
+export type Paseo = {
+  id: PaseoId;
   /** El número con el que se anuncia en la página. */
   orden: string;
   eyebrow: string;
   nombre: string;
-  /** El subtítulo que la distingue de la otra: "Paseo consciente". */
+  /** El subtítulo que lo distingue del otro: "Paseo consciente". */
   modalidad: string;
   /** El costo, ya escrito para mostrar. */
   costo: string;
+  /** Una línea con lo que hay que saber para elegirlo en el formulario. */
+  resumen: string;
   /** La frase de arriba de todo, la que invita. */
   claim: string;
   /** Los párrafos de la descripción principal. */
@@ -41,14 +43,15 @@ export type Experiencia = {
   fotoChicaAlt: string;
 };
 
-export const EXPERIENCIAS: Experiencia[] = [
+export const PASEOS: Paseo[] = [
   {
     id: "huerta",
     orden: "01",
-    eyebrow: "Experiencia 01 — Sin cargo",
+    eyebrow: "Paseo 01 — Sin cargo",
     nombre: "Visita a la Huerta",
     modalidad: "Paseo consciente",
     costo: "Sin cargo",
+    resumen: "40 minutos, sin cargo, apta para toda la familia",
     claim:
       "Descubrí los secretos del cultivo agroecológico y caminá entre los frutales de La Pebeta.",
     descripcion: [
@@ -62,7 +65,7 @@ export const EXPERIENCIAS: Experiencia[] = [
       { k: "Recorrido", v: "Caminata por la huerta y los frutales" },
       { k: "Exigencia física", v: "Baja, caminata tranquila" },
       { k: "Aptitud", v: "Apta para toda la familia" },
-      { k: "Costo", v: "Experiencia sin cargo por persona" },
+      { k: "Costo", v: "Paseo sin cargo por persona" },
       { k: "Al terminar", v: "Tu mesa lista para almorzar" },
       { k: "Requisito", v: "Reserva previa" },
     ],
@@ -75,15 +78,16 @@ export const EXPERIENCIAS: Experiencia[] = [
   {
     id: "granja",
     orden: "02",
-    eyebrow: "Experiencia 02 — Arancelada",
+    eyebrow: "Paseo 02 — Arancelada",
     nombre: "Paseo por la Granja",
     modalidad: "Recorrido productivo",
     costo: "$18.000 por persona",
+    resumen: "1 hora y 30 minutos, 2 km a pie, $18.000 por persona (mayores de 10 años)",
     claim:
       "A continuación del recorrido por la huerta, la visita sigue al sector de animales: 2 km a pie para descubrir el origen y la trazabilidad de los alimentos que llegan a tu mesa.",
     descripcion: [
       "A lo largo de un recorrido guiado a pie de aproximadamente 2 km —una hora y media de duración—, transitamos los distintos espacios donde cultivamos, criamos y trabajamos con respeto y dedicación.",
-      "Es una experiencia profundamente educativa y de observación consciente, pensada para comprender el ciclo natural de la tierra y los procesos sostenibles que dan vida a nuestra propuesta gastronómica. Contemplamos a los animales y los cultivos respetando su espacio, su ritmo y su hábitat natural.",
+      "Es un paseo profundamente educativo y de observación consciente, pensado para comprender el ciclo natural de la tierra y los procesos sostenibles que dan vida a nuestra propuesta gastronómica. Contemplamos a los animales y los cultivos respetando su espacio, su ritmo y su hábitat natural.",
     ],
     ficha: [
       { k: "Días", v: DIAS_TEXTO },
@@ -108,9 +112,25 @@ export const EXPERIENCIAS: Experiencia[] = [
   },
 ];
 
+/** Los ids, para validar lo que llega del formulario. */
+export const PASEO_IDS: PaseoId[] = PASEOS.map((paseo) => paseo.id);
+
+export function esPaseoId(valor: unknown): valor is PaseoId {
+  return typeof valor === "string" && (PASEO_IDS as string[]).includes(valor);
+}
+
+/**
+ * El paseo de un id que viene de la base o del formulario, que TypeScript no
+ * puede validar. Null si no es ninguno de los dos —una reserva vieja, tomada
+ * antes de que se pudiera elegir, guarda la cadena vacía—.
+ */
+export function buscarPaseo(id: string): Paseo | null {
+  return PASEOS.find((paseo) => paseo.id === id) ?? null;
+}
+
 /**
  * La tabla comparativa. Se escribe aparte de las fichas porque dice lo mismo
- * más corto: acá se leen las dos experiencias de una, renglón contra renglón.
+ * más corto: acá se leen los dos paseos de una, renglón contra renglón.
  */
 export const COMPARATIVA: { k: string; huerta: string; granja: string }[] = [
   {
@@ -139,7 +159,7 @@ export const COMPARATIVA: { k: string; huerta: string; granja: string }[] = [
   },
 ];
 
-/** Lo que conviene traer. Vale igual para las dos experiencias. */
+/** Lo que conviene traer. Vale igual para los dos paseos. */
 export const RECOMENDACIONES: { titulo: string; texto: string }[] = [
   {
     titulo: "En verano",

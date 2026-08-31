@@ -10,7 +10,7 @@ import { Lightbox } from "@/components/Lightbox";
 export const metadata: Metadata = {
   title: "Reservas — La Pebeta",
   description:
-    "Reservá una experiencia en el campo o una mesa en el restaurant de La Pebeta, en Los Cardales. Las experiencias salen viernes, sábados y domingos a las 11; el restaurant abre de jueves a domingo.",
+    "Reservá un paseo por el campo o una mesa en el restaurant de La Pebeta, en Los Cardales. Los paseos salen viernes, sábados y domingos a las 11; el restaurant abre de jueves a domingo.",
 };
 
 /**

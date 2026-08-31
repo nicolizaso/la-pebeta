@@ -1,7 +1,7 @@
 import { Photo } from "./Photo";
 import { LinkArrow } from "./LinkArrow";
 import { WHATSAPP } from "@/lib/contacto";
-import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/experiencias";
+import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/paseos";
 
 /** El cierre de la página: la banda a sangre completa que lleva a la reserva. */
 export function PaseosReserva() {
@@ -23,7 +23,7 @@ export function PaseosReserva() {
             La reserva previa es lo único imprescindible.
           </h2>
           <p className="body reveal">
-            Las dos experiencias salen {DIAS_TEXTO.toLowerCase()} a las {HORA_SALIDA} hs, y las dos
+            Los dos paseos salen {DIAS_TEXTO.toLowerCase()} a las {HORA_SALIDA} hs, y los dos
             terminan con tu mesa lista para almorzar sin esperas. Contanos cuál elegís al reservar,
             o consultanos por{" "}
             <a href={WHATSAPP} target="_blank" rel="noreferrer">
@@ -31,7 +31,7 @@ export function PaseosReserva() {
             </a>
             .
           </p>
-          <LinkArrow href="/reservas?tipo=paseos">Reservar una experiencia</LinkArrow>
+          <LinkArrow href="/reservas?tipo=paseos">Reservar un paseo</LinkArrow>
         </div>
         <Photo
           photo="paseos/12"

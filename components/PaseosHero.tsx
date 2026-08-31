@@ -1,5 +1,5 @@
 import { Photo } from "./Photo";
-import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/experiencias";
+import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/paseos";
 
 export function PaseosHero() {
   return (
@@ -15,7 +15,7 @@ export function PaseosHero() {
       />
       <div className="hero-inner">
         <div className="stamp">
-          <span className="dot"></span> Experiencias · La Pebeta
+          <span className="dot"></span> Paseos · La Pebeta
         </div>
         <h1 className="hero-title">
           <span className="hero-line">

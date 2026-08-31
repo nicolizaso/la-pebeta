@@ -5,6 +5,7 @@ import Link from "next/link";
 import { WHATSAPP } from "@/lib/contacto";
 import type { ReservaTipo } from "@/lib/db";
 import { REGLAS } from "@/lib/reservas";
+import { buscarPaseo, PASEOS } from "@/lib/paseos";
 
 type Estado =
   | { paso: "form"; error?: string }
@@ -36,9 +37,13 @@ export function ReservaForm({
   enviar: string;
 }) {
   const [estado, setEstado] = useState<Estado>({ paso: "form" });
+  // cuál de los dos paseos, para que la pista de abajo diga lo que sale el
+  // elegido. Sólo lo usa el formulario de paseos; en el de mesas queda vacío.
+  const [paseo, setPaseo] = useState("");
   const id = useId();
   const reglas = REGLAS[tipo];
   const horaFija = reglas.horas.length === 1 ? reglas.horas[0] : null;
+  const elegido = buscarPaseo(paseo);
 
   const onSubmit = async (evento: React.FormEvent<HTMLFormElement>) => {
     evento.preventDefault();
@@ -51,6 +56,7 @@ export function ReservaForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tipo,
+          paseo: tipo === "paseos" ? campos.get("paseo") : "",
           nombre: campos.get("nombre"),
           telefono: campos.get("telefono"),
           email: campos.get("email"),
@@ -132,10 +138,32 @@ export function ReservaForm({
     <form className="reserva-form" onSubmit={onSubmit} noValidate>
       <div className="reserva-form-head">
         <span className="reserva-form-paso">Pedido de reserva</span>
-        <h3>{reglas.etiqueta}</h3>
+        <h3>{elegido ? elegido.nombre : reglas.etiqueta}</h3>
       </div>
 
       <div className="campos">
+        {tipo === "paseos" ? (
+          <p className="campo ancho">
+            <label htmlFor={`${id}-paseo`}>Qué paseo</label>
+            <select
+              id={`${id}-paseo`}
+              name="paseo"
+              required
+              value={paseo}
+              onChange={(evento) => setPaseo(evento.target.value)}
+            >
+              <option value="">Elegí uno de los dos…</option>
+              {PASEOS.map((opcion) => (
+                <option key={opcion.id} value={opcion.id}>
+                  {opcion.nombre}
+                </option>
+              ))}
+            </select>
+            <span className="pista">
+              {elegido ? elegido.resumen : "La visita a la huerta o el recorrido por la granja"}
+            </span>
+          </p>
+        ) : null}
         <p className="campo ancho">
           <label htmlFor={`${id}-nombre`}>Nombre y apellido</label>
           <input id={`${id}-nombre`} name="nombre" type="text" required maxLength={80} autoComplete="name" />
@@ -191,7 +219,7 @@ export function ReservaForm({
             placeholder={
               tipo === "restaurant"
                 ? "Restricciones alimentarias, festejos, sillita para bebé…"
-                : "Cuál experiencia querés —huerta o granja—, con qué edades venís…"
+                : "Con qué edades venís, si hay movilidad reducida en el grupo…"
             }
           />
         </p>

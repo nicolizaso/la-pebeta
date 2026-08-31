@@ -1,5 +1,6 @@
 import type { Reserva, ReservaTipo } from "./db";
 import { desdeElReloj } from "./fechas";
+import { buscarPaseo, esPaseoId } from "./paseos";
 
 /**
  * Las reglas de una reserva viven acá porque las usan los dos lados: el
@@ -11,7 +12,7 @@ export const ZONA = "America/Argentina/Buenos_Aires";
 
 /**
  * No todo abre los mismos días, así que cada tipo lleva los suyos (`dias`, en
- * getDay): el restaurant atiende de jueves a domingo, pero las experiencias del
+ * getDay): el restaurant atiende de jueves a domingo, pero los paseos del
  * campo salen viernes, sábados y domingos. La tabla tiene la misma regla.
  */
 export const REGLAS: Record<
@@ -19,7 +20,7 @@ export const REGLAS: Record<
   { etiqueta: string; personasMax: number; horas: string[]; dias: number[]; diasTexto: string }
 > = {
   paseos: {
-    etiqueta: "Experiencia en el campo",
+    etiqueta: "Paseo por el campo",
     personasMax: 15,
     horas: ["11:00"],
     dias: [0, 5, 6],
@@ -45,6 +46,8 @@ export function hoyISO(): string {
 
 export type EntradaReserva = {
   tipo: ReservaTipo;
+  /** Cuál paseo. Vacío cuando lo que se reserva es una mesa. */
+  paseo: string;
   nombre: string;
   telefono: string;
   email: string;
@@ -72,6 +75,15 @@ export function validarReserva(cuerpo: unknown): Resultado {
     return { ok: false, error: "Elegí si querés reservar un paseo o una mesa.", campo: "tipo" };
   }
   const reglas = REGLAS[tipo];
+
+  // un paseo es uno de los dos; una mesa no lleva ninguno
+  let paseo = "";
+  if (tipo === "paseos") {
+    if (!esPaseoId(datos.paseo)) {
+      return { ok: false, error: "Elegí cuál de los dos paseos querés.", campo: "paseo" };
+    }
+    paseo = datos.paseo;
+  }
 
   const nombre = texto(datos.nombre);
   if (nombre.length < 2 || nombre.length > 80) {
@@ -108,7 +120,7 @@ export function validarReserva(cuerpo: unknown): Resultado {
       ok: false,
       error:
         tipo === "paseos"
-          ? `Las experiencias salen ${cuando}.`
+          ? `Los paseos salen ${cuando}.`
           : `Abrimos de ${cuando}.`,
       campo: "fecha",
     };
@@ -133,7 +145,23 @@ export function validarReserva(cuerpo: unknown): Resultado {
     return { ok: false, error: "El comentario quedó muy largo.", campo: "comentarios" };
   }
 
-  return { ok: true, datos: { tipo, nombre, telefono, email, fecha, hora, personas, comentarios } };
+  return {
+    ok: true,
+    datos: { tipo, paseo, nombre, telefono, email, fecha, hora, personas, comentarios },
+  };
+}
+
+/**
+ * Cómo se llama esta reserva en un listado: para una mesa, la etiqueta de su
+ * tipo; para un paseo, cuál de los dos. Las reservas viejas —tomadas antes de
+ * que se pudiera elegir— no tienen paseo y caen en la etiqueta genérica.
+ */
+export function nombreDeReserva(reserva: Pick<Reserva, "tipo" | "paseo">): string {
+  if (reserva.tipo === "paseos") {
+    const paseo = buscarPaseo(reserva.paseo);
+    if (paseo) return paseo.nombre;
+  }
+  return REGLAS[reserva.tipo].etiqueta;
 }
 
 /* ---------- cancelar desde el perfil ----------

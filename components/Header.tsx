@@ -8,8 +8,7 @@ const LINKS: (NavLink & { seccion?: Seccion })[] = [
   { href: "/restaurant", label: "Restaurant" },
   { href: "/granja", label: "Granja" },
   { href: "/huerta", label: "Huerta" },
-  // la ruta sigue siendo /paseos: es un link que puede estar guardado
-  { href: "/paseos", label: "Experiencias" },
+  { href: "/paseos", label: "Paseos" },
   { href: "/tienda", label: "Tienda", seccion: "tienda" },
   { href: "/blog", label: "Blog", seccion: "blog" },
 ];

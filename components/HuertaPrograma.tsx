@@ -1,6 +1,6 @@
 import { Photo } from "./Photo";
 import { LinkArrow } from "./LinkArrow";
-import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/experiencias";
+import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/paseos";
 
 const DATOS = [
   { k: "Días", v: DIAS_TEXTO },
@@ -34,7 +34,7 @@ export function HuertaPrograma() {
               </li>
             ))}
           </ul>
-          <LinkArrow href="/paseos#huerta">Ver la experiencia</LinkArrow>
+          <LinkArrow href="/paseos#huerta">Ver el paseo</LinkArrow>
         </div>
         <div className="media-stack">
           <Photo

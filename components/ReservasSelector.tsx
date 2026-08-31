@@ -6,7 +6,7 @@ import { Photo } from "./Photo";
 import { ReservaForm } from "./ReservaForm";
 import type { ReservaTipo } from "@/lib/db";
 import type { PhotoKey } from "@/lib/photos";
-import { DIAS_TEXTO, HORA_SALIDA, PRECIO_GRANJA } from "@/lib/experiencias";
+import { DIAS_TEXTO, HORA_SALIDA, PRECIO_GRANJA } from "@/lib/paseos";
 import { precio } from "@/lib/tienda";
 import { scrollToElement } from "@/lib/smooth-scroll";
 
@@ -39,14 +39,14 @@ const OPCIONES: Opcion[] = [
   {
     id: "paseos",
     eyebrow: "Al aire libre",
-    titulo: "Experiencia en el campo",
+    titulo: "Paseo por el campo",
     bajada:
       "La visita a la huerta, sin cargo, o el paseo por la granja: un recorrido productivo de 2 km entre los cultivos y los animales.",
     cuando: `${DIAS_TEXTO} · ${HORA_SALIDA} hs`,
     photo: "paseos/16",
     alt: "Rodeo de vacas Hereford descansando a la sombra de los árboles",
     position: "center 55%",
-    detalleTitulo: "Una experiencia guiada, antes del almuerzo.",
+    detalleTitulo: "Un paseo guiado, antes del almuerzo.",
     info: [
       { k: "Días", v: DIAS_TEXTO },
       { k: "Salida", v: `${HORA_SALIDA} hs, desde la tranquera` },
@@ -57,14 +57,13 @@ const OPCIONES: Opcion[] = [
     ],
     nota: (
       <>
-        <strong>Escribinos en el comentario cuál de las dos querés</strong> —la visita a la huerta o
-        el paseo por la granja— y con qué edades venís, que el recorrido productivo está
-        recomendado para mayores de diez años. Al terminar, tu mesa te espera lista para almorzar:
-        eso ya va incluido y no hace falta reservarla aparte.{" "}
-        <Link href="/paseos">Ver las dos experiencias</Link>.
+        <strong>Elegí abajo cuál de los dos querés.</strong> Si vas al recorrido por la granja,
+        contanos con qué edades venís: está recomendado para mayores de diez años. Al terminar, tu
+        mesa te espera lista para almorzar, así que eso ya va incluido y no hace falta reservarla
+        aparte. <Link href="/paseos">Ver los dos paseos</Link>.
       </>
     ),
-    enviar: "Reservar la experiencia",
+    enviar: "Reservar el paseo",
   },
   {
     id: "restaurant",
@@ -138,7 +137,7 @@ export function ReservasSelector({
             </div>
             <p className="reveal">
               Se puede venir sólo a comer, sólo a caminar el campo, o las dos cosas en la misma
-              visita: las dos experiencias terminan con la mesa lista. Elegí por dónde empezar.
+              visita: los dos paseos terminan con la mesa lista. Elegí por dónde empezar.
             </p>
           </div>
 

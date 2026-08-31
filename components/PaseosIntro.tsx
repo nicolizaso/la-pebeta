@@ -5,7 +5,7 @@ export function PaseosIntro() {
     <section className="intro">
       <div className="wrap">
         <div className="kicker">
-          <div className="eyebrow">Las experiencias</div>
+          <div className="eyebrow">Los paseos</div>
           <Photo
             photo="paseos/17"
             alt="Grupo de visitantes caminando por el camino de la granja"
@@ -17,8 +17,8 @@ export function PaseosIntro() {
           />
         </div>
         <p className="lede reveal">
-          Ver de dónde sale la comida cambia la manera de comerla. Las dos experiencias arrancan en
-          la huerta: una se queda ahí, entre los canteros y los frutales, y la otra sigue hasta los
+          Ver de dónde sale la comida cambia la manera de comerla. Los dos paseos arrancan en
+          la huerta: uno se queda ahí, entre los canteros y los frutales, y el otro sigue hasta los
           espacios productivos, donde viven los animales.
         </p>
       </div>

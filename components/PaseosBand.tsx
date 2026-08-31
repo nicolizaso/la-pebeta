@@ -1,6 +1,6 @@
 import { Photo } from "./Photo";
 import { LinkArrow } from "./LinkArrow";
-import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/experiencias";
+import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/paseos";
 
 /**
  * Full-bleed parallax band for the guided walks: pasture behind, the visit
@@ -20,17 +20,17 @@ export function PaseosBand() {
       />
       <div className="wrap band-inner">
         <div className="band-copy">
-          <div className="eyebrow reveal">05 — Experiencias</div>
+          <div className="eyebrow reveal">05 — Paseos</div>
           <h2 className="section-title reveal" data-split>
             Caminá el campo antes de sentarte a la mesa.
           </h2>
           <p className="body reveal">
-            Dos experiencias, las dos con reserva previa: la visita a la huerta, sin cargo y de 40
+            Dos paseos, los dos con reserva previa: la visita a la huerta, sin cargo y de 40
             minutos, y el paseo por la granja, un recorrido productivo de 2 km entre los cultivos y
             los animales. Salen {DIAS_TEXTO.toLowerCase()} a las {HORA_SALIDA} hs y terminan con tu
             mesa lista para almorzar.
           </p>
-          <LinkArrow href="/paseos">Conocer las experiencias</LinkArrow>
+          <LinkArrow href="/paseos">Conocer los paseos</LinkArrow>
         </div>
         <Photo
           photo="paseos/17"

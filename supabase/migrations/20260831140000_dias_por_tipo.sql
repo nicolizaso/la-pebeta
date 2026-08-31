@@ -1,8 +1,8 @@
 -- Los días abiertos dejan de ser los mismos para todo.
 --
--- El restaurant sigue atendiendo de jueves a domingo, pero las experiencias del
--- campo —la visita a la huerta y el paseo por la granja— salen viernes, sábados
--- y domingos. Hasta acá la tabla pedía un solo rango para los dos tipos, así
+-- El restaurant sigue atendiendo de jueves a domingo, pero los paseos del campo
+-- —la visita a la huerta y el paseo por la granja— salen viernes, sábados y
+-- domingos. Hasta acá la tabla pedía un solo rango para los dos tipos, así
 -- que un paseo un jueves entraba igual.
 --
 -- Es la misma regla que valida `lib/reservas.ts`, escrita también como

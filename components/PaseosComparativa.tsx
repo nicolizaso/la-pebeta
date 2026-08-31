@@ -1,10 +1,10 @@
 import { WHATSAPP } from "@/lib/contacto";
-import { COMPARATIVA, EXPERIENCIAS, RECOMENDACIONES } from "@/lib/experiencias";
+import { COMPARATIVA, PASEOS, RECOMENDACIONES } from "@/lib/paseos";
 
-const [HUERTA, GRANJA] = EXPERIENCIAS;
+const [HUERTA, GRANJA] = PASEOS;
 
 /**
- * Las dos experiencias enfrentadas, renglón por renglón, para elegir de una
+ * Los dos paseos enfrentados, renglón por renglón, para elegir de una
  * sola lectura. En pantallas chicas la tabla no se achica: cada renglón pasa a
  * ser una tarjeta con los dos valores uno debajo del otro, que es lo único que
  * se lee bien en un teléfono.
@@ -15,7 +15,7 @@ export function PaseosComparativa() {
       <div className="wrap">
         <div className="eyebrow reveal">Para elegir</div>
         <h2 className="section-title reveal" data-split>
-          Las dos, una al lado de la otra.
+          Los dos, uno al lado del otro.
         </h2>
 
         <table className="comparativa-tabla reveal">

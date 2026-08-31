@@ -10,7 +10,7 @@ import { PerfilPuerta } from "@/components/perfil/PerfilPuerta";
 import { WHATSAPP } from "@/lib/contacto";
 import { listarComprasDe, listarReservasDe, type Compra, type Reserva } from "@/lib/db";
 import { fechaHora, fechaLarga } from "@/lib/fechas";
-import { momentoDe, REGLAS, sePuedeCancelar } from "@/lib/reservas";
+import { momentoDe, nombreDeReserva, sePuedeCancelar } from "@/lib/reservas";
 import { hayClaveDeSesion, usuarioActual } from "@/lib/sesion";
 import { precio } from "@/lib/tienda";
 import { tieneContrasena } from "@/lib/usuarios";
@@ -156,7 +156,7 @@ export default async function PerfilPage() {
                           <span>{reserva.hora} hs</span>
                         </div>
                         <div className="perfil-item-que">
-                          <span className="perfil-item-tipo">{REGLAS[reserva.tipo].etiqueta}</span>
+                          <span className="perfil-item-tipo">{nombreDeReserva(reserva)}</span>
                           <span className="perfil-item-detalle">
                             {reserva.personas}{" "}
                             {reserva.personas === 1 ? "persona" : "personas"} · código{" "}
@@ -201,7 +201,7 @@ export default async function PerfilPage() {
                         <span>{reserva.hora} hs</span>
                       </div>
                       <div className="perfil-item-que">
-                        <span className="perfil-item-tipo">{REGLAS[reserva.tipo].etiqueta}</span>
+                        <span className="perfil-item-tipo">{nombreDeReserva(reserva)}</span>
                         <span className="perfil-item-detalle">
                           {reserva.personas} {reserva.personas === 1 ? "persona" : "personas"} ·
                           código <span className="perfil-codigo">{reserva.codigo}</span>
