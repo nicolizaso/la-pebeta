@@ -152,7 +152,7 @@ export function ReservaForm({
         <p className="campo">
           <label htmlFor={`${id}-fecha`}>Fecha</label>
           <input id={`${id}-fecha`} name="fecha" type="date" required min={hoy} defaultValue="" />
-          <span className="pista">Jueves a domingo</span>
+          <span className="pista">{reglas.diasTexto}</span>
         </p>
         <p className="campo">
           <label htmlFor={`${id}-hora`}>Horario</label>
@@ -191,7 +191,7 @@ export function ReservaForm({
             placeholder={
               tipo === "restaurant"
                 ? "Restricciones alimentarias, festejos, sillita para bebé…"
-                : "Chicos, movilidad reducida, si venís con el almuerzo reservado…"
+                : "Cuál experiencia querés —huerta o granja—, con qué edades venís…"
             }
           />
         </p>

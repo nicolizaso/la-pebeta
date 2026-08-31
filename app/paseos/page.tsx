@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { PaseosHero } from "@/components/PaseosHero";
 import { PaseosIntro } from "@/components/PaseosIntro";
-import { PaseosPrograma } from "@/components/PaseosPrograma";
+import { PaseosExperiencias } from "@/components/PaseosExperiencias";
+import { PaseosComparativa } from "@/components/PaseosComparativa";
 import { PaseosAnimales } from "@/components/PaseosAnimales";
 import { PaseosGaleria } from "@/components/PaseosGaleria";
 import { PaseosReserva } from "@/components/PaseosReserva";
@@ -12,9 +13,9 @@ import { SiteAnimations } from "@/components/SiteAnimations";
 import { Lightbox } from "@/components/Lightbox";
 
 export const metadata: Metadata = {
-  title: "Paseos y animales — La Pebeta",
+  title: "Experiencias — La Pebeta",
   description:
-    "Paseos guiados por la granja de La Pebeta en Los Cardales: salen a las 11 hs, recorren la huerta y los animales, y terminan en los gallineros antes del almuerzo.",
+    "Las dos experiencias de La Pebeta en Los Cardales: la visita a la huerta, sin cargo y de 40 minutos, y el paseo por la granja, un recorrido productivo de 2 km. Viernes, sábados y domingos a las 11, con reserva previa y la mesa lista al terminar.",
 };
 
 /**
@@ -31,7 +32,8 @@ export default function PaseosPage() {
       <main>
         <PaseosHero />
         <PaseosIntro />
-        <PaseosPrograma />
+        <PaseosExperiencias />
+        <PaseosComparativa />
         <PaseosAnimales />
         <PaseosGaleria />
         <PaseosReserva />

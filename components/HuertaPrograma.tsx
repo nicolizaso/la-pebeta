@@ -1,11 +1,14 @@
 import { Photo } from "./Photo";
 import { LinkArrow } from "./LinkArrow";
+import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/experiencias";
 
-const STEPS = [
-  "Te esperamos a las 11 hs en La Pebeta, con una bebida caliente.",
-  "Trasladamos hasta el centro de producción: huerta e invernáculo.",
-  "Recorrido guiado por la preparación del suelo, el semillero, la cosecha y la alimentación de los animales.",
-  "Cerramos la visita en los gallineros, antes de volver a la mesa.",
+const DATOS = [
+  { k: "Días", v: DIAS_TEXTO },
+  { k: "Salida", v: `${HORA_SALIDA} hs` },
+  { k: "Duración", v: "40 minutos aprox." },
+  { k: "Exigencia física", v: "Baja, caminata tranquila" },
+  { k: "Aptitud", v: "Apta para toda la familia" },
+  { k: "Costo", v: "Sin cargo" },
 ];
 
 export function HuertaPrograma() {
@@ -18,25 +21,27 @@ export function HuertaPrograma() {
             Antes de comer, caminá la huerta.
           </h2>
           <p className="body reveal">
-            Los fines de semana abrimos la producción antes del almuerzo: un recorrido guiado que
-            termina en la mesa del restaurant.
+            Un paseo informativo y educativo de cuarenta minutos entre los canteros y los frutales:
+            cómo cultivamos sin agroquímicos, qué pide cada temporada y el trabajo diario detrás de
+            cada verdura. Es sin cargo, va con reserva previa y termina con tu mesa lista para
+            almorzar.
           </p>
-          <ol className="steps">
-            {STEPS.map((step, i) => (
-              <li className="reveal" key={step}>
-                <span className="num">{String(i + 1).padStart(2, "0")}</span>
-                <p>{step}</p>
+          <ul className="info-list reveal">
+            {DATOS.map((dato) => (
+              <li key={dato.k}>
+                <span className="k">{dato.k}</span>
+                <span className="v">{dato.v}</span>
               </li>
             ))}
-          </ol>
-          <LinkArrow href="/#visita">Reservar visita</LinkArrow>
+          </ul>
+          <LinkArrow href="/paseos#huerta">Ver la experiencia</LinkArrow>
         </div>
         <div className="media-stack">
           <Photo
             photo="huerta/8"
             alt="Trabajadora de la huerta plantando de rodillas entre los canteros"
             className="media"
-            tag="Huerta — programa de visita"
+            tag="Huerta — 40 minutos, sin cargo"
             sizes="(max-width: 860px) 92vw, 46vw"
             reveal
             parallax

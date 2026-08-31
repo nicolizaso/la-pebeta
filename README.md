@@ -92,7 +92,8 @@ sesiones se caen solas—. El perfil lo avisa en pantalla cuando falta.
 
 Las reglas del negocio están dos veces a propósito: en `lib/reservas.ts` y
 `lib/tienda.ts`, que es lo que valida la API, y como constraints de la tabla
-(jueves a domingo, hasta 15 personas por paseo y 10 por mesa, entre 1 y 40
+(las experiencias del campo viernes, sábados y domingos y el restaurant de
+jueves a domingo, hasta 15 personas por paseo y 10 por mesa, entre 1 y 40
 renglones por compra), para que no entre nada raro ni siquiera escribiendo
 contra la base de forma directa.
 

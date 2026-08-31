@@ -6,6 +6,8 @@ import { Photo } from "./Photo";
 import { ReservaForm } from "./ReservaForm";
 import type { ReservaTipo } from "@/lib/db";
 import type { PhotoKey } from "@/lib/photos";
+import { DIAS_TEXTO, HORA_SALIDA, PRECIO_GRANJA } from "@/lib/experiencias";
+import { precio } from "@/lib/tienda";
 import { scrollToElement } from "@/lib/smooth-scroll";
 
 type Opcion = {
@@ -37,29 +39,32 @@ const OPCIONES: Opcion[] = [
   {
     id: "paseos",
     eyebrow: "Al aire libre",
-    titulo: "Paseo por el campo",
+    titulo: "Experiencia en el campo",
     bajada:
-      "Vacas de pastoreo, ovejas, chanchos y gallinas ponedoras, entre el bosque y los espejos de agua.",
-    cuando: "Jueves a domingo · 11 hs",
+      "La visita a la huerta, sin cargo, o el paseo por la granja: un recorrido productivo de 2 km entre los cultivos y los animales.",
+    cuando: `${DIAS_TEXTO} · ${HORA_SALIDA} hs`,
     photo: "paseos/16",
     alt: "Rodeo de vacas Hereford descansando a la sombra de los árboles",
     position: "center 55%",
-    detalleTitulo: "Un paseo guiado, antes del almuerzo.",
+    detalleTitulo: "Una experiencia guiada, antes del almuerzo.",
     info: [
-      { k: "Días", v: "Jueves a domingo" },
-      { k: "Salida", v: "11 hs, desde la tranquera" },
-      { k: "Duración", v: "90 minutos aproximadamente" },
+      { k: "Días", v: DIAS_TEXTO },
+      { k: "Salida", v: `${HORA_SALIDA} hs, desde la tranquera` },
+      { k: "Visita a la huerta", v: "40 minutos · sin cargo" },
+      { k: "Paseo por la granja", v: `1:30 hs · ${precio(PRECIO_GRANJA)} por persona` },
       { k: "Grupos", v: "Hasta 15 personas por recorrido" },
       { k: "Dirección", v: DIRECCION },
     ],
     nota: (
       <>
-        El recorrido termina en los gallineros, justo a tiempo para pasar a la mesa: si querés
-        encadenarlo con el almuerzo, <strong>reservá también mesa en el restaurant</strong> y lo
-        dejamos anotado en la misma visita.
+        <strong>Escribinos en el comentario cuál de las dos querés</strong> —la visita a la huerta o
+        el paseo por la granja— y con qué edades venís, que el recorrido productivo está
+        recomendado para mayores de diez años. Al terminar, tu mesa te espera lista para almorzar:
+        eso ya va incluido y no hace falta reservarla aparte.{" "}
+        <Link href="/paseos">Ver las dos experiencias</Link>.
       </>
     ),
-    enviar: "Reservar el paseo",
+    enviar: "Reservar la experiencia",
   },
   {
     id: "restaurant",
@@ -133,7 +138,7 @@ export function ReservasSelector({
             </div>
             <p className="reveal">
               Se puede venir sólo a comer, sólo a caminar el campo, o las dos cosas en la misma
-              visita. Elegí por dónde empezar.
+              visita: las dos experiencias terminan con la mesa lista. Elegí por dónde empezar.
             </p>
           </div>
 

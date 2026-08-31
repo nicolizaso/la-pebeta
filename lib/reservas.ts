@@ -9,22 +9,28 @@ import { desdeElReloj } from "./fechas";
 
 export const ZONA = "America/Argentina/Buenos_Aires";
 
-/** Domingo, jueves, viernes y sábado (getDay). */
-export const DIAS_ABIERTOS = [0, 4, 5, 6];
-
+/**
+ * No todo abre los mismos días, así que cada tipo lleva los suyos (`dias`, en
+ * getDay): el restaurant atiende de jueves a domingo, pero las experiencias del
+ * campo salen viernes, sábados y domingos. La tabla tiene la misma regla.
+ */
 export const REGLAS: Record<
   ReservaTipo,
-  { etiqueta: string; personasMax: number; horas: string[] }
+  { etiqueta: string; personasMax: number; horas: string[]; dias: number[]; diasTexto: string }
 > = {
   paseos: {
-    etiqueta: "Paseo por el campo",
+    etiqueta: "Experiencia en el campo",
     personasMax: 15,
     horas: ["11:00"],
+    dias: [0, 5, 6],
+    diasTexto: "Viernes, sábados y domingos",
   },
   restaurant: {
     etiqueta: "Mesa en el restaurant",
     personasMax: 10,
     horas: ["12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00"],
+    dias: [0, 4, 5, 6],
+    diasTexto: "Jueves a domingo",
   },
 };
 
@@ -96,8 +102,16 @@ export function validarReserva(cuerpo: unknown): Resultado {
   }
   // el mediodía evita que el parseo se corra de día por la zona horaria
   const dia = new Date(`${fecha}T12:00:00`).getDay();
-  if (!DIAS_ABIERTOS.includes(dia)) {
-    return { ok: false, error: "Abrimos de jueves a domingo.", campo: "fecha" };
+  if (!reglas.dias.includes(dia)) {
+    const cuando = reglas.diasTexto.toLowerCase();
+    return {
+      ok: false,
+      error:
+        tipo === "paseos"
+          ? `Las experiencias salen ${cuando}.`
+          : `Abrimos de ${cuando}.`,
+      campo: "fecha",
+    };
   }
 
   const hora = texto(datos.hora) || reglas.horas[0];
