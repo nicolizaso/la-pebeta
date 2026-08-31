@@ -4,6 +4,7 @@ import { ReservasSelector } from "@/components/ReservasSelector";
 import type { ReservaTipo } from "@/lib/db";
 import { esReservaTipo, hoyISO } from "@/lib/reservas";
 import { Footer } from "@/components/Footer";
+import { Asistente } from "@/components/chat/Asistente";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { Lightbox } from "@/components/Lightbox";
 
@@ -37,6 +38,7 @@ export default async function ReservasPage({
       </main>
       <Footer />
       <Lightbox />
+      <Asistente />
     </>
   );
 }

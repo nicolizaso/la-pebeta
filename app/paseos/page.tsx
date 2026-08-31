@@ -9,6 +9,7 @@ import { PaseosGaleria } from "@/components/PaseosGaleria";
 import { PaseosReserva } from "@/components/PaseosReserva";
 import { Visita } from "@/components/Visita";
 import { Footer } from "@/components/Footer";
+import { Asistente } from "@/components/chat/Asistente";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { Lightbox } from "@/components/Lightbox";
 
@@ -41,6 +42,7 @@ export default function PaseosPage() {
       </main>
       <Footer />
       <Lightbox />
+      <Asistente />
     </>
   );
 }

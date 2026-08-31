@@ -8,6 +8,7 @@ import { GranjaAnimales } from "@/components/GranjaAnimales";
 import { GranjaLugares } from "@/components/GranjaLugares";
 import { Visita } from "@/components/Visita";
 import { Footer } from "@/components/Footer";
+import { Asistente } from "@/components/chat/Asistente";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { Lightbox } from "@/components/Lightbox";
 
@@ -39,6 +40,7 @@ export default function GranjaPage() {
       </main>
       <Footer />
       <Lightbox />
+      <Asistente />
     </>
   );
 }

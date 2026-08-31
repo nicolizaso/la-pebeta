@@ -12,6 +12,7 @@ import { EventosSection } from "@/components/EventosSection";
 import { Valores } from "@/components/Valores";
 import { Visita } from "@/components/Visita";
 import { Footer } from "@/components/Footer";
+import { Asistente } from "@/components/chat/Asistente";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { Lightbox } from "@/components/Lightbox";
 
@@ -42,6 +43,7 @@ export default function Home() {
       </main>
       <Footer />
       <Lightbox />
+      <Asistente />
     </>
   );
 }
