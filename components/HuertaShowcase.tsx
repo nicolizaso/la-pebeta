@@ -39,7 +39,7 @@ export function HuertaShowcase() {
               Veinticinco canteros, dos invernáculos y un bosque frutal en producción todo el año.
               Nada viaja más de trescientos metros hasta la cocina.
             </p>
-            <LinkArrow href="/#visita">Visitar la huerta</LinkArrow>
+            <LinkArrow href="/huerta">Visitar la huerta</LinkArrow>
           </div>
         </div>
 
