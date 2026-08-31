@@ -1,5 +1,5 @@
 // GENERATED FILE — do not edit by hand.
-// Run `python3 scripts/optimize-images.py` after changing assets/imgs/.
+// Run `python3 scripts/optimize-images.py <carpeta-de-originales>`.
 
 export type PhotoAsset = {
   src: string;

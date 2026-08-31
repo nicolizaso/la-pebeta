@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { ingresar } from "@/app/admin/acciones";
 
 /** La puerta: una clave, la que está en `ADMIN_PASSWORD`. */
@@ -12,7 +13,9 @@ export function AdminLogin() {
     <div className="admin-puerta">
       <form className="admin-puerta-card" action={accion}>
         <div className="eyebrow">Panel</div>
-        <h1>La Pebeta</h1>
+        <h1>
+          <Logo />
+        </h1>
         <p>Las reservas tienen teléfonos y mails, así que el panel pide la clave.</p>
 
         <p className="campo">

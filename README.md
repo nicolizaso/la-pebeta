@@ -38,8 +38,10 @@ Abrí [http://localhost:3000](http://localhost:3000).
   `sesion.ts` y `usuarios.ts` (las cuentas de quienes reservan: la cookie
   firmada y las contraseñas), `fechas.ts`, `contacto.ts` y `smooth-scroll.ts`
   (el puente para mover la página a través de Lenis).
-- `assets/imgs/` — originales de cámara, ordenados por área. No se sirven: son el archivo del que sale `public/imgs/`.
-- `public/imgs/` — versiones web (WebP redimensionado) generadas por el script.
+- `public/` — lo único que se sirve tal cual: `logo.svg` y `logo-blanco.svg`
+  (el lockup de la marca, en oliva y en blanco) y `imgs/`, las versiones web
+  (WebP redimensionado) que genera el script. Los originales de cámara no
+  están acá: ver [Imágenes](#imágenes).
 - `supabase/migrations/` — el esquema de la base, en SQL y en orden.
 - `reference/` — prototipo HTML original usado como base del diseño.
 
@@ -400,13 +402,22 @@ Los originales pesan entre 2 y 30 MB cada uno, así que no se publican tal cual.
 `public/imgs/<área>/` y genera `lib/photo-manifest.generated.ts` con las
 dimensiones y un placeholder borroso inline de cada foto.
 
+El archivo de originales tampoco vive en el repo: eran 293 MB que nadie
+servía y que había que clonar igual. Se guarda aparte —un disco, la nube— y el
+script recibe la carpeta, que adentro tiene que traer las de siempre
+(`Restaurant`, `Granja`, `Huerta`, `Proveeduría`, `Paseos y Animales`,
+`Eventos`).
+
 ```bash
 pip install pillow
-python3 scripts/optimize-images.py
+python3 scripts/optimize-images.py ~/pebeta-originales
 ```
 
-Hay que correrlo cada vez que cambie `assets/imgs/`, y commitear tanto
-`public/imgs/` como el manifiesto generado.
+Hay que correrlo cada vez que cambien los originales, y commitear tanto
+`public/imgs/` como el manifiesto generado. Rehace nada más que lo que
+encuentra, así que alcanza con pasarle una carpeta con un área sola para
+rehacer esa; si la carpeta no existe o viene vacía corta sin tocar el
+manifiesto, para no dejar al sitio sin fotos.
 
 En el código las fotos se referencian por clave (`"huerta/17"`,
 `"restaurant/9"`), que TypeScript valida contra el manifiesto:
