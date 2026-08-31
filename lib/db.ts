@@ -6,7 +6,7 @@ import { supabase, supabaseAdmin } from "./supabase";
  * pasa por este archivo, así que mover los datos de lugar es reescribir esto y
  * nada más.
  *
- * Son ocho tablas en Postgres, en el proyecto de Supabase de La Pebeta. El
+ * Son nueve tablas en Postgres, en el proyecto de Supabase de La Pebeta. El
  * esquema está en `supabase/migrations/`: si acá se agrega un campo, allá va la
  * migración que lo crea.
  *
@@ -23,6 +23,7 @@ export const TABLAS = {
   notas: "notas",
   secciones: "secciones",
   usuarios: "usuarios",
+  consultas: "consultas",
 } as const;
 
 /**
@@ -911,4 +912,180 @@ export async function guardarSeccion(seccion: Seccion, activa: boolean): Promise
       `No se pudo ${activa ? "activar" : "desactivar"} la sección: ${error.message}`
     );
   }
+}
+
+/* ---------- las consultas del chat ----------
+   Todo lo de acá va con la secret key, y no porque sea del panel: `consultas` no
+   tiene una sola policy. Una conversación se escribe turno a turno, y una policy
+   de update abierta dejaría que cualquiera con un id reescriba el hilo de otro.
+   El navegador nunca le habla a esta tabla: le habla a /api/chat, que es el que
+   decide qué se guarda. */
+
+export type RolConsulta = "persona" | "asistente";
+
+export type MensajeConsulta = {
+  rol: RolConsulta;
+  texto: string;
+  /** ISO. */
+  momento: string;
+};
+
+/**
+ * Una reserva que el asistente armó y que todavía nadie confirmó.
+ *
+ * Vive en la fila de la consulta, del lado del server, y no viaja al navegador:
+ * el modelo propone, la persona aprieta un botón y el que escribe en `reservas`
+ * es `/api/chat/reserva`, que vuelve a leer esto de la base y a validarlo con
+ * `validarReserva`. Un tool call no es un consentimiento, así que el modelo no
+ * escribe nunca de forma directa.
+ */
+export type Propuesta = {
+  datos: NuevaReserva;
+  /** ISO. Cuándo se propuso: una propuesta vieja no se puede confirmar. */
+  propuesta: string;
+};
+
+export type ConsultaEstado = "abierta" | "derivada" | "resuelta";
+
+export type Consulta = {
+  id: string;
+  /** Código corto para dictar por teléfono: PC-4F2K9A. */
+  codigo: string;
+  creada: string;
+  actualizada: string;
+  estado: ConsultaEstado;
+  hilo: MensajeConsulta[];
+  /** Desde qué página se abrió el chat. */
+  pagina: string;
+  contacto: { nombre?: string; telefono?: string; email?: string };
+  propuesta: Propuesta | null;
+  /** La reserva que salió de esta conversación, si salió alguna. */
+  reserva: string | null;
+  /** El hash de la IP, para el contador por hora. Nunca la IP. */
+  huella: string;
+};
+
+/** Lo que hace falta para abrir una conversación. */
+export type NuevaConsulta = {
+  hilo: MensajeConsulta[];
+  pagina: string;
+  huella: string;
+};
+
+/**
+ * Abre una conversación y devuelve la fila tal como quedó guardada.
+ *
+ * Como en las reservas y en las compras, la fila se arma entera acá y el insert
+ * no pide RETURNING: la tabla no tiene policy de SELECT y no hace falta volver a
+ * leerla para saber qué se guardó.
+ */
+export async function crearConsulta(datos: NuevaConsulta): Promise<Consulta> {
+  const ahora = new Date().toISOString();
+  const consulta: Consulta = {
+    id: crypto.randomUUID(),
+    codigo: nuevoCodigo("PC"),
+    creada: ahora,
+    actualizada: ahora,
+    estado: "abierta",
+    contacto: {},
+    propuesta: null,
+    reserva: null,
+    ...datos,
+  };
+
+  const { error } = await supabaseAdmin().from(TABLAS.consultas).insert(consulta);
+  if (error) throw new Error(`No se pudo abrir la consulta: ${error.message}`);
+
+  return consulta;
+}
+
+/** Una conversación por id. Null si ya no está. */
+export async function buscarConsulta(id: string): Promise<Consulta | null> {
+  const { data, error } = await supabaseAdmin()
+    .from(TABLAS.consultas)
+    .select()
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error(`No se pudo leer la consulta: ${error.message}`);
+  return (data as Consulta | null) ?? null;
+}
+
+/** Lo que puede cambiar al cerrar un turno del chat. */
+export type CambioConsulta = {
+  hilo: MensajeConsulta[];
+  estado?: ConsultaEstado;
+  contacto?: Consulta["contacto"];
+  /** `null` limpia la propuesta pendiente; no pasarla la deja como estaba. */
+  propuesta?: Propuesta | null;
+  reserva?: string | null;
+};
+
+/** Cierra un turno: guarda el hilo y lo que haya cambiado con él. */
+export async function guardarConsulta(id: string, cambio: CambioConsulta): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from(TABLAS.consultas)
+    .update({ ...cambio, actualizada: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) throw new Error(`No se pudo guardar la consulta: ${error.message}`);
+}
+
+/**
+ * Cuántas conversaciones abrió esta huella desde `desde`.
+ *
+ * Es el freno del endpoint: `/api/chat` es público y cuesta plata cada vez que
+ * contesta. No reemplaza un rate limit de verdad —para eso haría falta Redis,
+ * que este stack no tiene— pero acota el daño con lo que hay.
+ */
+export async function contarConsultasDe(huella: string, desde: string): Promise<number> {
+  if (!huella) return 0;
+
+  const { count, error } = await supabaseAdmin()
+    .from(TABLAS.consultas)
+    .select("id", { count: "exact", head: true })
+    .eq("huella", huella)
+    .gte("creada", desde);
+
+  if (error) throw new Error(`No se pudieron contar las consultas: ${error.message}`);
+  return count ?? 0;
+}
+
+export type FiltroConsultas = {
+  estado?: ConsultaEstado;
+  /** Sólo las abiertas de este momento en adelante (ISO). */
+  desde?: string;
+};
+
+/**
+ * El listado del panel, lo último primero. Los hilos pueden tener un teléfono
+ * adentro, así que sólo salen por acá.
+ */
+export async function listarConsultas(filtro: FiltroConsultas = {}): Promise<Consulta[]> {
+  let consulta = supabaseAdmin().from(TABLAS.consultas).select();
+
+  if (filtro.estado) consulta = consulta.eq("estado", filtro.estado);
+  if (filtro.desde) consulta = consulta.gte("creada", filtro.desde);
+
+  const { data, error } = await consulta.order("creada", { ascending: false });
+
+  if (error) throw new Error(`No se pudieron leer las consultas: ${error.message}`);
+  return (data ?? []) as Consulta[];
+}
+
+/** Marcar una consulta resuelta, o volver a abrirla, desde el panel. */
+export async function cambiarEstadoConsulta(id: string, estado: ConsultaEstado): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from(TABLAS.consultas)
+    .update({ estado, actualizada: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) throw new Error(`No se pudo cambiar la consulta: ${error.message}`);
+}
+
+/** Borra una conversación de verdad: no queda en ningún lado. */
+export async function borrarConsulta(id: string): Promise<void> {
+  const { error } = await supabaseAdmin().from(TABLAS.consultas).delete().eq("id", id);
+
+  if (error) throw new Error(`No se pudo borrar la consulta: ${error.message}`);
 }

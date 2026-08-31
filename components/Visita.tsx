@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { Photo } from "./Photo";
+import { UBICACION } from "@/lib/casa";
 
 const INFO: { k: string; v: React.ReactNode }[] = [
   {
     k: "Dirección",
     v: (
       <>
-        Camino S.A. de Areco, Km 184
+        {UBICACION.calle}
         <br />
-        Los Cardales, Bs. As.
+        {UBICACION.localidad}, {UBICACION.provinciaCorta}
       </>
     ),
   },
@@ -24,7 +25,7 @@ export function Visita() {
           photo="granja/10"
           alt="Árbol solitario en el campo de La Pebeta, con los canteros al fondo"
           className="map reveal"
-          tag="Ruta prov. 6, Km 184 — Los Cardales"
+          tag={UBICACION.referencia}
           sizes="(max-width: 860px) 92vw, 46vw"
           reveal
           parallax

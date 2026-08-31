@@ -8,6 +8,8 @@ Home de La Pebeta — restaurant, granja agroecológica y proveeduría en Los Ca
 - [Tailwind CSS](https://tailwindcss.com/) v4
 - [GSAP](https://gsap.com/) + ScrollTrigger
 - [Lenis](https://lenis.darkroom.engineering/) para smooth scroll
+- [Supabase](https://supabase.com/) (Postgres + Storage)
+- [SDK de Anthropic](https://github.com/anthropics/anthropic-sdk-typescript) para el chat
 
 ## Desarrollo
 
@@ -23,13 +25,16 @@ Abrí [http://localhost:3000](http://localhost:3000).
 - `app/` — layout, páginas (home, `/restaurant`, `/reservas`, `/tienda`,
   `/blog` y `/perfil`), el panel (`app/admin/`), la API (`app/api/`) y estilos
   globales.
-- `components/` — una pieza por sección, más `Photo` (la primitiva de imagen), `Lightbox` (visor a pantalla completa) y `SiteAnimations`, que centraliza Lenis + GSAP ScrollTrigger. En `components/admin/` van las del panel, en `components/tienda/` las del catálogo y el carrito y en `components/blog/` las de las notas.
+- `components/` — una pieza por sección, más `Photo` (la primitiva de imagen), `Lightbox` (visor a pantalla completa) y `SiteAnimations`, que centraliza Lenis + GSAP ScrollTrigger. En `components/admin/` van las del panel, en `components/tienda/` las del catálogo y el carrito, en `components/blog/` las de las notas y en `components/chat/` la burbuja del asistente.
 - `lib/` — `photos.ts` y el manifiesto generado de imágenes, `db.ts` (los tipos
   y el acceso a la base), `supabase.ts` (la conexión), `subidas.ts` (las fotos
   que se suben desde el panel), `reservas.ts`, `paseos.ts` (los dos paseos,
   con sus días, su duración y su costo), `horarios.ts`, `tienda.ts`,
   `productos.ts` y `blog.ts` (las reglas de cada uno), `secciones.ts` (qué
-  secciones del sitio están abiertas), `admin.ts` (la puerta del panel),
+  secciones del sitio están abiertas), `casa.ts` (dónde queda y qué es, para
+  las secciones que lo muestran y para el asistente), `consultas.ts` y
+  `asistente.ts` (las reglas del chat y el prompt del modelo), `admin.ts` (la
+  puerta del panel),
   `sesion.ts` y `usuarios.ts` (las cuentas de quienes reservan: la cookie
   firmada y las contraseñas), `fechas.ts`, `contacto.ts` y `smooth-scroll.ts`
   (el puente para mover la página a través de Lenis).
@@ -40,7 +45,7 @@ Abrí [http://localhost:3000](http://localhost:3000).
 
 ## Datos
 
-Los datos viven en Postgres, en Supabase. Son siete tablas:
+Los datos viven en Postgres, en Supabase. Son nueve tablas:
 
 | Tabla | Qué guarda |
 | --- | --- |
@@ -52,6 +57,7 @@ Los datos viven en Postgres, en Supabase. Son siete tablas:
 | `horarios` | Los horarios de atención: una fila por área (`proveeduria` / `restaurant`) y día de la semana. |
 | `notas` | Las notas del blog: título, `slug` (la URL), bajada, cuerpo, firma, `etiquetas`, foto, `publicada` y `fecha`, que es cuándo sale y la que lleva la nota. |
 | `secciones` | Una fila por sección que se puede apagar (`tienda`, `blog`) con su `activa`. Es lo que mira el menú antes de mostrar un link y cada página antes de mostrarse. |
+| `consultas` | Una fila por conversación del chat: el `hilo` entero, desde qué página se abrió, el `estado` (`abierta` / `derivada` / `resuelta`), la `propuesta` de reserva que todavía nadie confirmó y el hash de la IP con el que se cuenta el límite por hora. No tiene ninguna policy: se lee y se escribe sólo con la secret key. |
 
 Hay además un bucket de Storage, `blog`, con las fotos que se suben desde el
 panel para una nota. Es público —lo que guarda se ve en el blog— y acepta hasta
@@ -71,6 +77,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_…
 SUPABASE_SECRET_KEY=sb_secret_…        # el panel, el alta de reservas y el perfil
 ADMIN_PASSWORD=…                       # la clave del panel
 SESION_SECRET=…                        # firma las sesiones de /perfil
+ANTHROPIC_API_KEY=sk-ant-…             # el asistente del chat
 ```
 
 En local van en `.env.local`; en Vercel, en las environment variables del
@@ -84,6 +91,10 @@ foto, ver un borrador o una nota programada, y —desde que las reservas tienen
 dueño— darlas de alta, porque la reserva y la cuenta de quien reserva se
 guardan en el mismo movimiento. Las policies de alta pública de `reservas` y
 `compras` siguen en la base, pero el sitio ya no las usa.
+
+`ANTHROPIC_API_KEY` es la del chat. Sin ella el widget no se monta y `/api/chat`
+contesta 503: el sitio funciona entero, sin burbuja. Es lo que corresponde para
+una clave que se paga por uso —ver [El chat](#el-chat)—.
 
 `SESION_SECRET` firma la cookie del perfil. Sin ella el server firma con un
 secreto al azar que dura lo que dura el proceso: en local se entra igual y lo
@@ -266,6 +277,88 @@ para tocarla, se busca por reserva *y* por cuenta. Cancelar se puede hasta
 24 horas antes (`HORAS_PARA_CANCELAR` en `lib/reservas.ts`); más cerca de la
 fecha, la pantalla manda a WhatsApp.
 
+## El chat
+
+Abajo a la derecha, en todas las páginas del sitio, hay una burbuja que contesta
+consultas: horarios, cómo llegar, qué hay en la proveeduría, qué paseo conviene
+—y, si quien pregunta ya sabe lo que quiere, le toma la reserva ahí mismo—. Del
+otro lado hay un modelo de Anthropic (`claude-opus-5`, vía `@anthropic-ai/sdk`).
+
+**No hay una base de conocimiento nueva.** Casi todo lo que alguien pregunta ya
+vive en alguna tabla —los horarios, el catálogo con sus precios y su stock, las
+notas del blog— o en `lib/casa.ts`, así que el asistente no sale a buscar nada:
+recibe el estado de la casa escrito adelante en el system prompt y contesta con
+eso. El sitio es chico y entra entero en un prefijo cacheado, y una sola llamada
+por pregunta es más rápida y más barata que un ida y vuelta de herramientas para
+leer lo que ya teníamos.
+
+`lib/casa.ts` nació de ahí: la dirección y los cuatro rasgos de la carta estaban
+escritos adentro del JSX de las secciones que los muestran, y salieron de ahí
+cuando apareció un segundo lector. Es el mismo criterio que `lib/contacto.ts` con
+el WhatsApp: un dato, un lugar.
+
+**Lo que no sabe, no lo inventa.** Precios, stock, horarios y fechas son plata y
+son gente manejando una hora y media hasta el campo. Si algo no está en lo que
+recibió, usa la herramienta `derivar_a_la_casa`: la consulta queda marcada
+`derivada` en el panel y a la persona se le pasa el WhatsApp. El menú del día
+entra en esa bolsa a propósito —la carta cambia cada semana y no está cargada en
+ningún lado—, así que el asistente puede explicar cómo funciona la cocina pero no
+nombrar un plato como si estuviera hoy.
+
+Con la tienda o el blog apagados, sus datos ni se leen: el asistente no puede
+ofrecer un catálogo que en el sitio dice "Próximamente".
+
+### La reserva sale de la conversación, pero no la toma el modelo
+
+Cuando ya tiene todo, el asistente llama a `proponer_reserva`. Eso **no reserva
+nada**: arma un resumen, lo valida con `validarReserva` —la misma función que usa
+el formulario, así que una fecha que ya pasó o un paseo un jueves se corrigen
+hablando— y lo muestra en pantalla con un botón.
+
+La propuesta se guarda en `consultas.propuesta`, del lado del server, y no viaja
+de vuelta: el botón manda el id de la conversación y nada más. `POST
+/api/chat/reserva` la vuelve a leer de la base, la vuelve a validar y recién ahí
+escribe en `reservas`. Un tool call no es un consentimiento, y una propuesta que
+viajara al navegador y volviera sería una reserva que cualquiera puede editar
+antes de apretar. La propuesta vence a la media hora.
+
+De ahí en adelante es una reserva como cualquier otra: entra pendiente, abre la
+cuenta con el mail y aparece en `/perfil` y en el panel.
+
+### Cómo viaja
+
+`POST /api/chat` es el único que le habla al modelo. El navegador manda el id de
+la conversación y el texto; el hilo **nunca** viaja desde el cliente, se lee de
+`consultas`. Si viajara, alcanzaría con editarlo para hacerle decir cualquier
+cosa al asistente.
+
+La respuesta baja como SSE y se pinta a medida que llega: la diferencia entre
+esperar quince segundos en blanco y leer mientras se escribe. Si quien pregunta
+cierra la pestaña en el medio, el turno se termina igual del lado del server y se
+guarda entero.
+
+### Lo que cuesta
+
+`/api/chat` es un endpoint público que cuesta plata cada vez que contesta, así
+que tiene dos frenos, los dos en `lib/consultas.ts` y repetidos como constraints
+de la tabla:
+
+- **cinco conversaciones por hora** desde la misma IP —del hash de la IP, no de
+  la IP: no se puede volver de ahí a la dirección, y no queremos poder—;
+- **veinte preguntas por conversación**, y ahí se deriva al WhatsApp sin volver a
+  llamar al modelo.
+
+No es un rate limit de verdad —para eso haría falta Redis, que este stack no
+tiene— pero acota lo que puede costar una tarde con alguien haciendo `curl` en un
+`for`. El prompt está partido en dos bloques: el estable —que es casi todo— con
+`cache_control`, y la fecha y la hora después del breakpoint, porque un `new
+Date()` metido arriba invalidaría el cache en cada visita sin fallar, sólo saliendo
+diez veces más caro.
+
+`consultas` no tiene una sola policy y RLS queda prendido: con la publishable key
+esa tabla no existe. Una conversación se escribe turno a turno, y una policy de
+update abierta dejaría que cualquiera con un id reescriba el hilo de otro.
+
 ## Panel
 
 `/admin` —se entra por el botón del pie del sitio— es la parte de adentro. Un
@@ -273,9 +366,10 @@ aside con las secciones y, al lado, la que esté abierta:
 
 | Sección | Qué hace |
 | --- | --- |
-| Resumen | Lo que hay tomado de hoy en adelante —pendientes, reservas del día, personas anotadas— más lo vendido en la tienda en los últimos 30 días y los pedidos que faltan entregar. |
+| Resumen | Lo que hay tomado de hoy en adelante —pendientes, reservas del día, personas anotadas—, lo vendido en la tienda en los últimos 30 días, los pedidos que faltan entregar y las consultas del chat que esperan respuesta. |
 | Reservas | Paseos y mesas en la misma tabla, con filtros por qué, cuándo y estado, y los botones para confirmar, cancelar o reabrir. |
 | Compras | Los pedidos de la tienda, lo último primero, con el detalle de cada uno y su total. Entran `pagada`: se marcan entregadas cuando la persona pasó a retirar, o canceladas si no pasó. |
+| Consultas | Las conversaciones del chat, cada una entera y no en una celda. El filtro que se usa es "Para contestar": las que el asistente derivó porque no supo. Se marcan resueltas, se vuelven a abrir o se borran. |
 | Cuentas | Quiénes reservan, con buscador por mail, nombre o teléfono. Lo único que se hace desde acá es borrarle la contraseña a quien se la olvidó, para que vuelva a entrar con el mail. |
 | Productos | El catálogo entero, publicado o no, con filtros por categoría, estado y buscador. Se carga, se edita, se publica, se esconde y se borra. Arriba está el interruptor que abre o cierra la tienda en el sitio. |
 | Categorías | Los cajones de la tienda: nombre, bajada, orden y si están a la vista. Se puede crear una sin pasar por acá, desde el select del formulario de un producto. |

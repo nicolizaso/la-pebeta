@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
+import { Asistente } from "@/components/chat/Asistente";
 import { Header } from "@/components/Header";
 import { Proximamente } from "@/components/Proximamente";
 import { SiteAnimations } from "@/components/SiteAnimations";
@@ -155,6 +156,7 @@ export default async function BlogPage({
         )}
       </main>
       <Footer />
+      <Asistente />
     </>
   );
 }

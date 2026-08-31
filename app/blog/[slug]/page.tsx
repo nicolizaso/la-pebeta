@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
+import { Asistente } from "@/components/chat/Asistente";
 import { Header } from "@/components/Header";
 import { Proximamente } from "@/components/Proximamente";
 import { SiteAnimations } from "@/components/SiteAnimations";
@@ -197,6 +198,7 @@ export default async function NotaPage({ params }: { params: Promise<{ slug: str
         ) : null}
       </main>
       <Footer />
+      <Asistente />
     </>
   );
 }

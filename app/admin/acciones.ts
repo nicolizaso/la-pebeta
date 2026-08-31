@@ -11,7 +11,9 @@ import {
   borrarNota,
   borrarProducto,
   buscarNota,
+  borrarConsulta,
   cambiarEstadoCompra,
+  cambiarEstadoConsulta,
   cambiarEstadoReserva,
   contarProductosDe,
   crearNota,
@@ -26,6 +28,7 @@ import {
   slugLibre,
   type Categoria,
   type CompraEstado,
+  type ConsultaEstado,
   type Horario,
   type Nota,
   type ReservaEstado,
@@ -40,6 +43,7 @@ import {
   validarCategoria,
   validarProducto,
 } from "@/lib/productos";
+import { esEstadoConsulta } from "@/lib/consultas";
 import { esSeccion, SECCIONES } from "@/lib/secciones";
 import { subirImagen } from "@/lib/subidas";
 
@@ -104,6 +108,43 @@ export async function cambiarEstadoDeCompra(datos: FormData): Promise<void> {
 
   await cambiarEstadoCompra(id, estado);
   revalidatePath("/admin/compras");
+  revalidatePath("/admin");
+}
+
+/**
+ * Marca una consulta del chat como resuelta, o la vuelve a abrir.
+ *
+ * "Derivada" la pone el asistente solo, cuando no supo contestar: es la pila de
+ * lo que hay que contestar a mano. Desde acá se la cierra cuando ya se le
+ * contestó a la persona por WhatsApp.
+ */
+export async function cambiarEstadoDeConsulta(datos: FormData): Promise<void> {
+  if (!(await haySesion())) return;
+
+  const id = texto(datos.get("id"));
+  const estado = texto(datos.get("estado"));
+  if (!id || !esEstadoConsulta(estado)) return;
+
+  await cambiarEstadoConsulta(id, estado as ConsultaEstado);
+  revalidatePath("/admin/consultas");
+  revalidatePath("/admin");
+}
+
+/**
+ * Borra una conversación del chat, de verdad.
+ *
+ * Un hilo puede tener un teléfono y un mail adentro —los deja quien pregunta,
+ * escribiéndolos— así que tiene que haber una forma de que deje de existir. La
+ * reserva que haya salido de esa conversación no se toca: es una fila aparte.
+ */
+export async function eliminarConsulta(datos: FormData): Promise<void> {
+  if (!(await haySesion())) return;
+
+  const id = texto(datos.get("id"));
+  if (!id) return;
+
+  await borrarConsulta(id);
+  revalidatePath("/admin/consultas");
   revalidatePath("/admin");
 }
 

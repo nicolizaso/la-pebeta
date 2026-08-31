@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
+import { Asistente } from "@/components/chat/Asistente";
 import { Header } from "@/components/Header";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { CancelarReserva } from "@/components/perfil/CancelarReserva";
@@ -268,6 +269,7 @@ export default async function PerfilPage() {
         </section>
       </main>
       <Footer />
+      <Asistente />
     </>
   );
 }

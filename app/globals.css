@@ -3684,6 +3684,20 @@ footer .fine {
 .admin-estado.cancelada {
   color: rgba(35, 40, 31, 0.45);
 }
+/* los estados de una consulta del chat: "derivada" es la que espera a una
+   persona, y por eso es la única que llama la atención */
+.admin-estado.abierta {
+  color: var(--moss-deep);
+  border-color: rgba(73, 87, 60, 0.45);
+}
+.admin-estado.derivada {
+  color: var(--clay);
+  border-color: rgba(168, 85, 46, 0.45);
+  background: rgba(168, 85, 46, 0.08);
+}
+.admin-estado.resuelta {
+  color: rgba(35, 40, 31, 0.45);
+}
 /* el código se dicta por teléfono: no se parte en dos renglones */
 .admin-codigo {
   white-space: nowrap;
@@ -4630,5 +4644,396 @@ footer .fine {
   .admin-modal-pie .admin-btn {
     flex: 1 1 140px;
     text-align: center;
+  }
+}
+
+/* ---------- las consultas del chat en el panel ----------
+   No es una tabla: una conversación se lee entera o no se lee. Cada una es un
+   <details> que se abre solo cuando está esperando respuesta. */
+.admin-consultas {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.admin-consulta {
+  border: 1px solid var(--line);
+  background: var(--paper-light);
+  padding: 16px 18px;
+}
+.admin-consulta > summary {
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 14px;
+  align-items: center;
+}
+.admin-consulta > summary::-webkit-details-marker {
+  display: none;
+}
+.admin-consulta-asunto {
+  font-size: 15px;
+  color: var(--ink);
+}
+.admin-consulta > summary .admin-sub {
+  grid-column: 1 / -1;
+}
+.admin-consulta-contacto {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--moss);
+}
+.admin-consulta-hilo {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.admin-consulta-msg {
+  margin: 0;
+  max-width: 88%;
+  padding: 9px 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.admin-consulta-msg.persona {
+  align-self: flex-start;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+.admin-consulta-msg.asistente {
+  align-self: flex-end;
+  background: rgba(73, 87, 60, 0.1);
+  border: 1px solid rgba(73, 87, 60, 0.28);
+}
+.admin-consulta-reserva {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--moss-deep);
+}
+.admin-consulta .admin-acciones {
+  margin-top: 14px;
+}
+
+/* ---------- el chat ----------
+   Una burbuja abajo a la derecha, en todas las páginas del sitio. Vive por
+   encima del header (50-90) y por debajo del lightbox (100): si alguien abre
+   una foto a pantalla completa, el chat se queda atrás, que es lo que
+   corresponde. */
+.chat {
+  position: fixed;
+  right: clamp(16px, 3vw, 32px);
+  bottom: clamp(16px, 3vw, 32px);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  font-family: var(--ff-body);
+}
+.chat-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper-light);
+  font-size: 13.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(16, 20, 13, 0.22);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.chat-boton:hover {
+  background: var(--moss);
+  border-color: var(--moss);
+}
+/* el punto que dice que hay alguien del otro lado */
+.chat-boton-icono {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--wheat);
+}
+
+.chat-panel {
+  width: min(380px, calc(100vw - 32px));
+  height: min(560px, calc(100vh - 140px));
+  display: flex;
+  flex-direction: column;
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 60px rgba(16, 20, 13, 0.24);
+  overflow: hidden;
+}
+.chat-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--ink);
+  color: var(--paper-light);
+}
+.chat-cabecera div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.chat-cabecera strong {
+  font-family: var(--ff-display);
+  font-size: 19px;
+  font-weight: 400;
+}
+.chat-cabecera span {
+  font-size: 12px;
+  opacity: 0.72;
+}
+.chat-cabecera button {
+  background: none;
+  border: 0;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  padding: 6px;
+  cursor: pointer;
+  opacity: 0.72;
+}
+.chat-cabecera button:hover {
+  opacity: 1;
+}
+
+.chat-hilo {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chat-burbuja {
+  max-width: 86%;
+  margin: 0;
+  padding: 11px 14px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.chat-burbuja.asistente {
+  align-self: flex-start;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.chat-burbuja.persona {
+  align-self: flex-end;
+  background: var(--moss);
+  color: var(--paper-light);
+}
+/* los tres puntos de "está escribiendo", mientras no baja la primera letra */
+.chat-burbuja.escribiendo {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.chat-burbuja.escribiendo span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--moss);
+  opacity: 0.35;
+  animation: chat-latido 1.2s infinite ease-in-out;
+}
+.chat-burbuja.escribiendo span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.chat-burbuja.escribiendo span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes chat-latido {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.chat-atajos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.chat-atajos button {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--moss-deep);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+.chat-atajos button:hover {
+  background: var(--paper);
+  border-color: var(--ink);
+}
+
+.chat-derivada,
+.chat-error {
+  margin: 0;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  border: 1px dashed var(--line);
+  color: var(--moss-deep);
+}
+.chat-error {
+  border-style: solid;
+  border-color: var(--clay);
+  color: var(--clay);
+}
+.chat-derivada a {
+  color: var(--clay);
+}
+
+/* el resumen de la reserva que el asistente propuso */
+.chat-propuesta {
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chat-propuesta-titulo {
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+.chat-propuesta dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.chat-propuesta dl div {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+.chat-propuesta dt {
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+.chat-propuesta dd {
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--ink);
+}
+.chat-propuesta .btn {
+  text-align: center;
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  font-family: inherit;
+}
+.chat-propuesta .btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.chat-propuesta-pie {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--moss);
+}
+.chat-propuesta-pie a {
+  color: var(--clay);
+}
+
+.chat-escribir {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  background: var(--paper-light);
+}
+.chat-escribir textarea {
+  flex: 1;
+  resize: none;
+  max-height: 120px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  background: var(--paper-light);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.chat-escribir textarea:focus {
+  outline: 0;
+  border-color: var(--ink);
+}
+.chat-escribir button {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper-light);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+.chat-escribir button:hover:not(:disabled) {
+  background: var(--moss);
+  border-color: var(--moss);
+}
+.chat-escribir button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* En el teléfono el panel ocupa casi todo: una columna de 380px al lado del
+   pulgar no se lee, y la burbuja tapa la mitad de la pantalla igual. */
+@media (max-width: 560px) {
+  .chat {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    align-items: stretch;
+  }
+  .chat-boton {
+    align-self: flex-end;
+  }
+  .chat-panel {
+    width: 100%;
+    height: min(72vh, calc(100vh - 120px));
+  }
+  .chat-propuesta dl div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-burbuja.escribiendo span {
+    animation: none;
   }
 }
