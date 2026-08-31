@@ -26,7 +26,8 @@ Abrí [http://localhost:3000](http://localhost:3000).
 - `components/` — una pieza por sección, más `Photo` (la primitiva de imagen), `Lightbox` (visor a pantalla completa) y `SiteAnimations`, que centraliza Lenis + GSAP ScrollTrigger. En `components/admin/` van las del panel, en `components/tienda/` las del catálogo y el carrito y en `components/blog/` las de las notas.
 - `lib/` — `photos.ts` y el manifiesto generado de imágenes, `db.ts` (los tipos
   y el acceso a la base), `supabase.ts` (la conexión), `subidas.ts` (las fotos
-  que se suben desde el panel), `reservas.ts`, `horarios.ts`, `tienda.ts`,
+  que se suben desde el panel), `reservas.ts`, `paseos.ts` (los dos paseos,
+  con sus días, su duración y su costo), `horarios.ts`, `tienda.ts`,
   `productos.ts` y `blog.ts` (las reglas de cada uno), `secciones.ts` (qué
   secciones del sitio están abiertas), `admin.ts` (la puerta del panel),
   `sesion.ts` y `usuarios.ts` (las cuentas de quienes reservan: la cookie
@@ -43,7 +44,7 @@ Los datos viven en Postgres, en Supabase. Son siete tablas:
 
 | Tabla | Qué guarda |
 | --- | --- |
-| `reservas` | Pedidos de paseo y de mesa, con `estado` (`pendiente` / `confirmada` / `cancelada`), un `codigo` corto para dictar por teléfono y el `usuario_id` de quien la tomó. |
+| `reservas` | Pedidos de paseo y de mesa, con `estado` (`pendiente` / `confirmada` / `cancelada`), un `codigo` corto para dictar por teléfono, el `usuario_id` de quien la tomó y, en los paseos, `paseo`: cuál de los dos. |
 | `usuarios` | Las cuentas. Nadie se registra: nacen solas con la primera reserva o compra, y el mail es la llave. `password_hash` está vacío hasta que esa persona se pone una contraseña desde su perfil. |
 | `productos` | El catálogo de la proveeduría: precio, unidad, stock, su categoría y la clave de su foto en el manifiesto. |
 | `categorias` | Los cajones del catálogo, con el orden en que se listan. No hay una lista fija en el código: se cargan desde el panel y el `id` sale del nombre (`quesos-de-tambo`). |
@@ -92,7 +93,8 @@ sesiones se caen solas—. El perfil lo avisa en pantalla cuando falta.
 
 Las reglas del negocio están dos veces a propósito: en `lib/reservas.ts` y
 `lib/tienda.ts`, que es lo que valida la API, y como constraints de la tabla
-(jueves a domingo, hasta 15 personas por paseo y 10 por mesa, entre 1 y 40
+(los paseos del campo viernes, sábados y domingos y el restaurant de
+jueves a domingo, hasta 15 personas por paseo y 10 por mesa, entre 1 y 40
 renglones por compra), para que no entre nada raro ni siquiera escribiendo
 contra la base de forma directa.
 
@@ -102,6 +104,14 @@ contra la base de forma directa.
 código. El formulario de `/reservas` es el que lo llama, tanto para paseos como
 para mesas. No hay GET: el listado tiene teléfonos y mails, así que sale por el
 panel, que lee del lado del server con la secret key.
+
+Un paseo lleva además cuál de los dos es —`huerta` o `granja`—, que el
+formulario pregunta en su primer campo y muestra ahí mismo cuánto dura y cuánto
+sale el elegido. Los dos paseos y sus datos están en `lib/paseos.ts`, que es de
+donde salen también la página de `/paseos` y la banda de la home, para que no se
+contradigan entre pantallas. Una mesa no lleva ninguno, y los paseos anteriores
+a que se pudiera elegir tampoco: esos se listan con la etiqueta genérica y lo
+que se quería está en el comentario.
 
 El mail dejó de ser opcional: es con lo que se arma la cuenta. En el mismo POST
 se busca o se crea el usuario de ese mail y la reserva nace con su `usuario_id`

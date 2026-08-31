@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AdminAviso, FaltaSecretKey } from "@/components/admin/AdminAviso";
-import { esReservaTipo, hoyISO, REGLAS } from "@/lib/reservas";
+import { esReservaTipo, hoyISO, nombreDeReserva } from "@/lib/reservas";
 import { fechaCorta } from "@/lib/fechas";
 import { listarReservas, type Reserva, type ReservaEstado } from "@/lib/db";
 import { hayClaveDeAdmin } from "@/lib/supabase";
@@ -145,7 +145,7 @@ export default async function ReservasAdminPage({
                       <span className="admin-sub">{reserva.hora} hs</span>
                     </td>
                     <td>
-                      {REGLAS[reserva.tipo].etiqueta}
+                      {nombreDeReserva(reserva)}
                       <span className="admin-sub">
                         {reserva.personas} {reserva.personas === 1 ? "persona" : "personas"}
                       </span>

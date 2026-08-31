@@ -1,4 +1,5 @@
 import { Photo } from "./Photo";
+import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/paseos";
 
 export function PaseosHero() {
   return (
@@ -6,7 +7,7 @@ export function PaseosHero() {
       <Photo
         photo="paseos/16"
         alt="Rodeo de vacas Hereford descansando a la sombra de los árboles"
-        tag="Paseo guiado — 11 hs"
+        tag={`${DIAS_TEXTO} — ${HORA_SALIDA} hs`}
         sizes="100vw"
         priority
         scrim
@@ -14,7 +15,7 @@ export function PaseosHero() {
       />
       <div className="hero-inner">
         <div className="stamp">
-          <span className="dot"></span> Paseos · Animales
+          <span className="dot"></span> Paseos · La Pebeta
         </div>
         <h1 className="hero-title">
           <span className="hero-line">
@@ -27,8 +28,9 @@ export function PaseosHero() {
           </span>
         </h1>
         <p className="hero-sub">
-          Un recorrido guiado por la huerta, los canteros y los animales, que sale a la mañana y
-          termina en los gallineros, justo antes del almuerzo.
+          Dos maneras de recorrer La Pebeta antes del almuerzo: una visita a la huerta, sin cargo, y
+          un recorrido productivo por la granja. Las dos con reserva previa, y las dos terminan con
+          tu mesa lista.
         </p>
       </div>
       <div className="scroll-cue">

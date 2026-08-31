@@ -1,5 +1,7 @@
 import { Photo } from "./Photo";
 import { LinkArrow } from "./LinkArrow";
+import { WHATSAPP } from "@/lib/contacto";
+import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/paseos";
 
 /** El cierre de la página: la banda a sangre completa que lleva a la reserva. */
 export function PaseosReserva() {
@@ -18,11 +20,16 @@ export function PaseosReserva() {
         <div className="band-copy">
           <div className="eyebrow reveal">Reservar</div>
           <h2 className="section-title reveal" data-split>
-            Un paseo a la mañana y el almuerzo después.
+            La reserva previa es lo único imprescindible.
           </h2>
           <p className="body reveal">
-            El paseo sale a las 11 hs y el restaurant abre a las 12: se puede hacer todo el mismo
-            día. La mesa se reserva aparte, para elegir a qué hora sentarse.
+            Los dos paseos salen {DIAS_TEXTO.toLowerCase()} a las {HORA_SALIDA} hs, y los dos
+            terminan con tu mesa lista para almorzar sin esperas. Contanos cuál elegís al reservar,
+            o consultanos por{" "}
+            <a href={WHATSAPP} target="_blank" rel="noreferrer">
+              WhatsApp
+            </a>
+            .
           </p>
           <LinkArrow href="/reservas?tipo=paseos">Reservar un paseo</LinkArrow>
         </div>
@@ -30,7 +37,7 @@ export function PaseosReserva() {
           photo="paseos/12"
           alt="Rodeo de vacas y terneros apiñados junto al alambrado"
           className="band-card reveal"
-          tag="Grupos de hasta 15 personas"
+          tag="Con reserva previa"
           sizes="(max-width: 860px) 80vw, 30vw"
           reveal
           lightbox

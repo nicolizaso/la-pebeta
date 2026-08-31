@@ -1,5 +1,6 @@
 import { Photo } from "./Photo";
 import { LinkArrow } from "./LinkArrow";
+import { DIAS_TEXTO, HORA_SALIDA } from "@/lib/paseos";
 
 /**
  * Full-bleed parallax band for the guided walks: pasture behind, the visit
@@ -19,22 +20,23 @@ export function PaseosBand() {
       />
       <div className="wrap band-inner">
         <div className="band-copy">
-          <div className="eyebrow reveal">05 — Paseos y animales</div>
+          <div className="eyebrow reveal">05 — Paseos</div>
           <h2 className="section-title reveal" data-split>
             Caminá el campo antes de sentarte a la mesa.
           </h2>
           <p className="body reveal">
-            Vacas de pastoreo, ovejas, chanchos y gallinas ponedoras conviven con el bosque y los
-            espejos de agua. Los recorridos salen a la mañana y terminan en los gallineros, justo
-            antes del almuerzo.
+            Dos paseos, los dos con reserva previa: la visita a la huerta, sin cargo y de 40
+            minutos, y el paseo por la granja, un recorrido productivo de 2 km entre los cultivos y
+            los animales. Salen {DIAS_TEXTO.toLowerCase()} a las {HORA_SALIDA} hs y terminan con tu
+            mesa lista para almorzar.
           </p>
-          <LinkArrow href="/reservas?tipo=paseos">Reservar un paseo</LinkArrow>
+          <LinkArrow href="/paseos">Conocer los paseos</LinkArrow>
         </div>
         <Photo
           photo="paseos/17"
           alt="Grupo de visitantes caminando por el camino de la granja"
           className="band-card reveal"
-          tag="Paseo guiado — 11 hs"
+          tag={`${DIAS_TEXTO} — ${HORA_SALIDA} hs`}
           sizes="(max-width: 860px) 80vw, 30vw"
           reveal
           lightbox

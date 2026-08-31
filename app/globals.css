@@ -868,6 +868,144 @@ h2.section-title {
   border-top: 1px solid var(--line);
 }
 
+/* ---------- fichas de cada paseo ----------
+   Los dos paseos de /paseos. Cada uno es un `.feature` con su ficha de
+   datos clave: lo único propio es el claim de arriba y el ancho de la ficha,
+   que en media página no puede leerse como la de `.visita`. */
+/* la ficha hace la columna de texto mucho más alta que la foto, así que las
+   dos arrancan arriba: centradas, la foto quedaba flotando en el medio */
+.paseo-detalle .wrap {
+  align-items: start;
+}
+.paseo-detalle .media-stack {
+  margin-top: 52px;
+}
+.paseo-detalle .copy .paseo-claim {
+  font-family: var(--ff-display);
+  font-size: clamp(19px, 2.1vw, 25px);
+  line-height: 1.34;
+  margin: 0 0 22px;
+  max-width: 40ch;
+  color: rgba(35, 40, 31, 0.9);
+}
+.paseo-detalle .copy .info-list {
+  margin: 30px 0 34px;
+}
+.paseo-detalle .copy .info-list .v {
+  max-width: 30ch;
+}
+
+/* ---------- comparativa ----------
+   Los dos paseos enfrentados. Es una tabla de verdad —tres columnas, un
+   encabezado por paseo— porque eso es lo que dice: dos valores para el
+   mismo dato. En pantallas chicas no se achica ni se scrollea de costado: cada
+   renglón se rearma como una tarjeta con los dos valores etiquetados. */
+.comparativa {
+  padding: clamp(80px, 10vw, 140px) 0;
+  border-top: 1px solid var(--line);
+}
+.comparativa-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: clamp(30px, 4vw, 48px);
+  text-align: left;
+}
+.comparativa-tabla thead th {
+  vertical-align: bottom;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--ink);
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(19px, 2vw, 26px);
+  line-height: 1.15;
+  width: 34%;
+}
+.comparativa-tabla thead th:first-child {
+  width: 32%;
+}
+.comparativa-tabla thead th em {
+  display: block;
+  margin-top: 7px;
+  font-family: var(--ff-mono);
+  font-style: normal;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+.comparativa-tabla tbody th {
+  font-family: var(--ff-mono);
+  font-weight: 400;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.55);
+  vertical-align: top;
+}
+.comparativa-tabla tbody th,
+.comparativa-tabla tbody td {
+  padding: 18px 24px 18px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14.5px;
+  line-height: 1.55;
+  vertical-align: top;
+}
+.comparativa-tabla tbody td:last-child {
+  padding-right: 0;
+}
+
+.comparativa-pie {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(30px, 5vw, 70px);
+  align-items: start;
+  margin-top: clamp(40px, 5vw, 62px);
+}
+.recos h3 {
+  font-family: var(--ff-mono);
+  font-weight: 400;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--clay);
+  margin: 0 0 18px;
+}
+.recos ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.recos li {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.recos strong {
+  display: block;
+  font-weight: 400;
+  font-family: var(--ff-display);
+  font-size: 19px;
+  margin-bottom: 8px;
+}
+.recos span {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(35, 40, 31, 0.75);
+}
+.comparativa-nota {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: rgba(35, 40, 31, 0.75);
+  max-width: 40ch;
+}
+.comparativa-nota a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ---------- quotes ---------- */
 .valores {
   position: relative;
@@ -1185,6 +1323,16 @@ h2.section-title {
 }
 .reserva-detalle .info-list {
   margin: 30px 0 0;
+}
+/* el link dentro de la nota, que si no se lee como texto corrido */
+.reserva-nota a {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 2px;
+  text-decoration: none;
+  transition: border-color 0.3s ease;
+}
+.reserva-nota a:hover {
+  border-bottom-color: var(--ink);
 }
 .reserva-detalle .info-list .v a {
   border-bottom: 1px solid var(--line);
@@ -2957,6 +3105,50 @@ footer .fine {
   .visita .wrap {
     grid-template-columns: 1fr;
   }
+  .comparativa-pie {
+    grid-template-columns: 1fr;
+  }
+
+  /* la tabla se rearma como una lista de tarjetas: el dato arriba y los dos
+     valores debajo, cada uno con el nombre de su paseo */
+  .comparativa-tabla,
+  .comparativa-tabla tbody,
+  .comparativa-tabla tr,
+  .comparativa-tabla tbody th,
+  .comparativa-tabla tbody td {
+    display: block;
+    width: auto;
+  }
+  .comparativa-tabla thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .comparativa-tabla tr {
+    border-top: 1px solid var(--ink);
+    padding: 20px 0 6px;
+  }
+  .comparativa-tabla tbody th {
+    padding: 0 0 14px;
+    border-bottom: 0;
+  }
+  .comparativa-tabla tbody td {
+    padding: 0 0 14px;
+    border-bottom: 0;
+  }
+  .comparativa-tabla tbody td::before {
+    content: attr(data-de);
+    display: block;
+    margin-bottom: 4px;
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--clay);
+  }
   .reservas {
     min-height: 0;
   }
@@ -3056,6 +3248,9 @@ footer .fine {
   .mosaic,
   .platos-grid {
     columns: 1;
+  }
+  .recos ul {
+    grid-template-columns: 1fr;
   }
   .granja-gallery {
     grid-template-columns: 1fr;

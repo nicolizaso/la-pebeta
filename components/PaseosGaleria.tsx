@@ -19,13 +19,14 @@ export function PaseosGaleria() {
           <div>
             <div className="eyebrow reveal">En el camino</div>
             <h2 className="section-title reveal" data-split>
-              Lo que se ve entre la huerta y los gallineros.
+              Lo que se ve entre la huerta y los animales.
             </h2>
           </div>
           <div className="eventos-note reveal">
             <p>
               El recorrido cambia con la estación: lo que está en cosecha, qué parcela están
-              pastoreando los animales y cuánta agua trajo la semana.
+              pastoreando los animales y cuánta agua trajo la semana. Contemplamos a los animales y
+              los cultivos respetando su espacio, su ritmo y su hábitat natural.
             </p>
             <LinkArrow href="/granja">Conocer la granja</LinkArrow>
           </div>

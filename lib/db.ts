@@ -58,6 +58,11 @@ export type Reserva = {
   /** La cuenta que la tomó. Null en las reservas anteriores a las cuentas. */
   usuario_id: string | null;
   tipo: ReservaTipo;
+  /**
+   * Cuál paseo, si es un paseo: "huerta" o "granja". Vacío en las mesas y en
+   * las reservas anteriores a que se pudiera elegir.
+   */
+  paseo: string;
   estado: ReservaEstado;
   creada: string;
   nombre: string;
@@ -215,6 +220,7 @@ export type NuevaCompra = {
 /** Los datos que llegan del formulario, ya validados. */
 export type NuevaReserva = {
   tipo: ReservaTipo;
+  paseo: string;
   nombre: string;
   telefono: string;
   email: string;

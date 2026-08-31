@@ -36,7 +36,7 @@ export function PaseosAnimales() {
   return (
     <section className="process" id="animales">
       <div className="wrap">
-        <div className="eyebrow">Quiénes viven acá</div>
+        <div className="eyebrow">En el recorrido productivo</div>
         <div className="process-track">
           <div className="process-line"></div>
           {ANIMALES.map((animal) => (
