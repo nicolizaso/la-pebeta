@@ -23,8 +23,9 @@ Abrí [http://localhost:3000](http://localhost:3000).
 ## Estructura
 
 - `app/` — layout, páginas (home, `/restaurant`, `/reservas`, `/tienda`,
-  `/blog` y `/perfil`), el panel (`app/admin/`), la API (`app/api/`) y estilos
-  globales.
+  `/blog` y `/perfil`), el panel (`app/admin/`), la API (`app/api/`), estilos
+  globales y los íconos de la marca (`icon.svg`, `favicon.ico` y
+  `apple-icon.png`: el monograma LP, recortado del propio logo).
 - `components/` — una pieza por sección, más `Photo` (la primitiva de imagen), `Lightbox` (visor a pantalla completa) y `SiteAnimations`, que centraliza Lenis + GSAP ScrollTrigger. En `components/admin/` van las del panel, en `components/tienda/` las del catálogo y el carrito, en `components/blog/` las de las notas y en `components/chat/` la burbuja del asistente.
 - `lib/` — `photos.ts` y el manifiesto generado de imágenes, `db.ts` (los tipos
   y el acceso a la base), `supabase.ts` (la conexión), `subidas.ts` (las fotos
