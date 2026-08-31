@@ -17,6 +17,12 @@ export const metadata: Metadata = {
     "La huerta de La Pebeta en Los Cardales: veinticinco canteros, dos invernáculos y un bosque frutal en producción todo el año, sin agroquímicos y a trescientos metros de la cocina.",
 };
 
+/**
+ * Se arma en cada visita: el menú pregunta qué secciones están activas, y
+ * prender la tienda o el blog desde el panel tiene que verse acá enseguida.
+ */
+export const dynamic = "force-dynamic";
+
 export default function HuertaPage() {
   return (
     <>

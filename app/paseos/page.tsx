@@ -17,6 +17,12 @@ export const metadata: Metadata = {
     "Paseos guiados por la granja de La Pebeta en Los Cardales: salen a las 11 hs, recorren la huerta y los animales, y terminan en los gallineros antes del almuerzo.",
 };
 
+/**
+ * Se arma en cada visita: el menú pregunta qué secciones están activas, y
+ * prender la tienda o el blog desde el panel tiene que verse acá enseguida.
+ */
+export const dynamic = "force-dynamic";
+
 export default function PaseosPage() {
   return (
     <>

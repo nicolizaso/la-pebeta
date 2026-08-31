@@ -18,6 +18,7 @@ import {
   crearProducto,
   guardarCategorias,
   guardarHorarios,
+  guardarSeccion,
   listarCategoriasDelPanel,
   olvidarContrasena,
   publicarNota,
@@ -39,6 +40,7 @@ import {
   validarCategoria,
   validarProducto,
 } from "@/lib/productos";
+import { esSeccion, SECCIONES } from "@/lib/secciones";
 import { subirImagen } from "@/lib/subidas";
 
 /**
@@ -478,4 +480,44 @@ export async function eliminarNota(datos: FormData): Promise<void> {
   seTocoElBlog();
   revalidatePath(`/blog/${texto(datos.get("slug"))}`);
   redirect("/admin/blog");
+}
+
+/* ---------- las secciones del sitio ---------- */
+
+/**
+ * Prende o apaga la tienda o el blog.
+ *
+ * Es el interruptor que la casa tiene en Productos y en Blog: mientras una
+ * sección está apagada no aparece en el menú, su dirección muestra un
+ * "Próximamente" y —en el caso de la tienda— la API no cierra ninguna compra.
+ * Lo que se carga en el panel se sigue cargando igual: apagar no esconde
+ * productos ni despublica notas, cierra la puerta de calle.
+ *
+ * Se revalida el sitio entero (`"/"` como layout) porque el menú está en todas
+ * las páginas: el cambio tiene que verse en la home, no sólo en la sección.
+ */
+export async function cambiarSeccion(_previo: Respuesta, datos: FormData): Promise<Respuesta> {
+  if (!(await haySesion())) return SIN_SESION;
+
+  const seccion = texto(datos.get("seccion"));
+  if (!esSeccion(seccion)) return { ok: false, mensaje: "No sabemos de qué sección se trata." };
+
+  const activa = texto(datos.get("activa")) === "si";
+  try {
+    await guardarSeccion(seccion, activa);
+  } catch (error) {
+    console.error("No se pudo cambiar la sección", error);
+    return {
+      ok: false,
+      mensaje: `No pudimos ${activa ? "activar" : "desactivar"} ${SECCIONES[seccion].nombre}. Probá de nuevo.`,
+    };
+  }
+
+  revalidatePath("/", "layout");
+  return {
+    ok: true,
+    mensaje: activa
+      ? `Listo: ${SECCIONES[seccion].nombre} ya está en el sitio.`
+      : `Listo: ${SECCIONES[seccion].nombre} salió del sitio y queda en “Próximamente”.`,
+  };
 }

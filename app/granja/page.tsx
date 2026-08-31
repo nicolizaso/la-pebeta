@@ -17,6 +17,12 @@ export const metadata: Metadata = {
     "La granja agroecológica de La Pebeta en Los Cardales: bosques, espejos de agua, compost y animales de pastoreo, con el territorio diseñado desde la permacultura.",
 };
 
+/**
+ * Se arma en cada visita: el menú pregunta qué secciones están activas, y
+ * prender la tienda o el blog desde el panel tiene que verse acá enseguida.
+ */
+export const dynamic = "force-dynamic";
+
 export default function GranjaPage() {
   return (
     <>

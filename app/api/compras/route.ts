@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { asegurarUsuario, crearCompra, listarCatalogo, type Usuario } from "@/lib/db";
+import { seccionActiva } from "@/lib/secciones";
 import { abrirSesion } from "@/lib/sesion";
 import { validarCompra } from "@/lib/tienda";
 import { tieneContrasena } from "@/lib/usuarios";
@@ -19,8 +20,23 @@ import { tieneContrasena } from "@/lib/usuarios";
  *
  * No hay GET: los pedidos tienen nombre y teléfono, así que el listado sale por
  * el panel, que lee del lado del server con la secret key.
+ *
+ * Con la tienda apagada desde el panel no entra ninguna compra: la puerta está
+ * acá y no sólo en la página, porque una URL de API no deja de existir porque
+ * la vista se haya escondido.
  */
 export async function POST(request: Request) {
+  if (!(await seccionActiva("tienda"))) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "La tienda todavía no está abierta. Escribinos por WhatsApp y te tomamos el pedido a mano.",
+      },
+      { status: 503 }
+    );
+  }
+
   let cuerpo: unknown;
   try {
     cuerpo = await request.json();

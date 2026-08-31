@@ -1,73 +1,37 @@
-"use client";
+import { HeaderNav, type NavLink } from "./HeaderNav";
+import type { Seccion } from "@/lib/db";
+import { seccionesActivas } from "@/lib/secciones";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-
-const NAV_LINKS = [
+/** El menú entero; los dos últimos cuelgan de una sección que se puede apagar. */
+const LINKS: (NavLink & { seccion?: Seccion })[] = [
   { href: "/", label: "Inicio" },
   { href: "/restaurant", label: "Restaurant" },
   { href: "/granja", label: "Granja" },
   { href: "/huerta", label: "Huerta" },
   { href: "/paseos", label: "Paseos" },
-  { href: "/tienda", label: "Tienda" },
-  { href: "/blog", label: "Blog" },
+  { href: "/tienda", label: "Tienda", seccion: "tienda" },
+  { href: "/blog", label: "Blog", seccion: "blog" },
 ];
 
-export function Header() {
-  const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [conCuenta, setConCuenta] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  /**
-   * "Mi perfil" aparece si hay sesión, y eso se pregunta acá y no en el server
-   * a propósito: leer la cookie mientras se arma la página volvería dinámicas a
-   * todas las del sitio, que hoy salen estáticas. La cookie que se mira no es
-   * la de la sesión —esa es httpOnly y no se puede leer desde el navegador—
-   * sino la señal que la acompaña, que sólo dice que hay alguien.
-   */
-  useEffect(() => {
-    setConCuenta(document.cookie.split("; ").includes("pebeta_sesion=1"));
-  }, []);
-
-  const close = () => setOpen(false);
-
-  return (
-    <header className={`site${scrolled ? " scrolled" : ""}`}>
-      <Link href="/" className="logo" onClick={close}>
-        La Pebeta
-      </Link>
-      <nav className={`links${open ? " open" : ""}`}>
-        {NAV_LINKS.map((link) => (
-          <Link key={link.href} href={link.href} onClick={close}>
-            {link.label}
-          </Link>
-        ))}
-        {conCuenta ? (
-          <Link href="/perfil" onClick={close}>
-            Mi perfil
-          </Link>
-        ) : null}
-        <Link href="/reservas" className="cta" onClick={close}>
-          Reservar
-        </Link>
-      </nav>
-      <button
-        className="nav-toggle"
-        aria-label="Abrir menú"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-    </header>
+/**
+ * El menú del sitio.
+ *
+ * Tienda y Blog entran sólo si esa sección está prendida en el panel: mientras
+ * está apagada no hay puerta al "Próximamente" desde el menú. Se pregunta acá,
+ * del lado del server, así el navegador nunca recibe la lista completa ni
+ * parpadea al hidratar.
+ *
+ * Por esta lectura las páginas que muestran el menú se arman en cada visita
+ * (`dynamic = "force-dynamic"`): prender la tienda tiene que verse en el menú
+ * enseguida, sin esperar un deploy. "Mi perfil" sigue resolviéndose en el
+ * navegador —está en `HeaderNav`—, porque eso cambia por visitante y no por
+ * sitio.
+ */
+export async function Header() {
+  const activas = await seccionesActivas();
+  const links = LINKS.filter((link) => !link.seccion || activas[link.seccion]).map(
+    ({ href, label }) => ({ href, label })
   );
+
+  return <HeaderNav links={links} />;
 }

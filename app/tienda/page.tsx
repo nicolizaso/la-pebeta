@@ -2,18 +2,36 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { Proximamente } from "@/components/Proximamente";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { Tienda } from "@/components/tienda/Tienda";
 import { WHATSAPP } from "@/lib/contacto";
 import { listarCatalogo, type Categoria, type Producto } from "@/lib/db";
 import { buscarFoto } from "@/lib/photos";
+import { seccionActiva } from "@/lib/secciones";
 import type { ProductoVista } from "@/lib/tienda";
 
-export const metadata: Metadata = {
-  title: "Tienda — La Pebeta",
-  description:
-    "El catálogo de la proveeduría de La Pebeta: verduras, frutas, huevos, conservas y plantines de la granja, para encargar y retirar en Los Cardales.",
-};
+/**
+ * Con la tienda apagada la página sigue existiendo pero no es un catálogo, así
+ * que no se ofrece como uno: cambia el título y se pide que no se indexe, para
+ * que el buscador no se quede con un "Próximamente" como la tienda de la casa.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  if (!(await seccionActiva("tienda"))) {
+    return {
+      title: "Tienda — Próximamente — La Pebeta",
+      description:
+        "La tienda de la proveeduría de La Pebeta está por abrir. Mientras tanto, escribinos por WhatsApp y te tomamos el pedido.",
+      robots: { index: false, follow: true },
+    };
+  }
+
+  return {
+    title: "Tienda — La Pebeta",
+    description:
+      "El catálogo de la proveeduría de La Pebeta: verduras, frutas, huevos, conservas y plantines de la granja, para encargar y retirar en Los Cardales.",
+  };
+}
 
 /**
  * La tienda de la proveeduría.
@@ -37,6 +55,21 @@ function paraLaVista(productos: Producto[], categorias: Categoria[]): ProductoVi
 }
 
 export default async function TiendaPage() {
+  if (!(await seccionActiva("tienda"))) {
+    return (
+      <Proximamente eyebrow="Proveeduría" titulo="La tienda está por abrir.">
+        <p>
+          Estamos terminando de cargar el catálogo de la proveeduría: verduras y frutas de
+          estación, huevos, conservas y plantines, para encargar y retirar en Los Cardales.
+        </p>
+        <p>
+          Mientras tanto la proveeduría atiende como siempre y los pedidos los tomamos por
+          WhatsApp: escribinos y te contamos qué se está cosechando esta semana.
+        </p>
+      </Proximamente>
+    );
+  }
+
   let productos: Producto[] = [];
   let categorias: Categoria[] = [];
   let fallo = false;

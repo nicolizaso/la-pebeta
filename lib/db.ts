@@ -6,7 +6,7 @@ import { supabase, supabaseAdmin } from "./supabase";
  * pasa por este archivo, así que mover los datos de lugar es reescribir esto y
  * nada más.
  *
- * Son siete tablas en Postgres, en el proyecto de Supabase de La Pebeta. El
+ * Son ocho tablas en Postgres, en el proyecto de Supabase de La Pebeta. El
  * esquema está en `supabase/migrations/`: si acá se agrega un campo, allá va la
  * migración que lo crea.
  *
@@ -21,6 +21,7 @@ export const TABLAS = {
   compras: "compras",
   horarios: "horarios",
   notas: "notas",
+  secciones: "secciones",
   usuarios: "usuarios",
 } as const;
 
@@ -69,6 +70,12 @@ export type Reserva = {
   personas: number;
   comentarios: string;
 };
+
+/** Las partes del sitio que se pueden apagar desde el panel. */
+export type Seccion = "tienda" | "blog";
+
+/** Cuáles están abiertas al público, todas juntas. */
+export type Secciones = Record<Seccion, boolean>;
 
 /** Las dos áreas que atienden al público con horario propio. */
 export type HorarioArea = "proveeduria" | "restaurant";
@@ -860,4 +867,42 @@ export async function guardarHorarios(area: HorarioArea, semana: Horario[]): Pro
     .upsert(filas, { onConflict: "area,dia" });
 
   if (error) throw new Error(`No se pudieron guardar los horarios: ${error.message}`);
+}
+
+/* ---------- las secciones que se prenden y se apagan ---------- */
+
+/**
+ * Qué secciones del sitio están abiertas.
+ *
+ * Son públicas —el menú y cada página preguntan por ellas en cada visita—, así
+ * que se leen con la publishable key. Lo que no esté cargado cuenta como
+ * apagado: la falta de una fila no puede abrir una sección.
+ */
+export async function listarSecciones(): Promise<Secciones> {
+  const { data, error } = await supabase().from(TABLAS.secciones).select("id, activa");
+
+  if (error) throw new Error(`No se pudieron leer las secciones: ${error.message}`);
+
+  const estado: Secciones = { tienda: false, blog: false };
+  for (const fila of (data ?? []) as { id: string; activa: boolean }[]) {
+    if (fila.id === "tienda" || fila.id === "blog") estado[fila.id] = fila.activa;
+  }
+  return estado;
+}
+
+/**
+ * Prende o apaga una sección. Sólo del panel: la tabla no tiene policy de
+ * escritura, y es un upsert para que la primera vez no haya que haber corrido
+ * ningún alta a mano.
+ */
+export async function guardarSeccion(seccion: Seccion, activa: boolean): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from(TABLAS.secciones)
+    .upsert({ id: seccion, activa, actualizado: new Date().toISOString() }, { onConflict: "id" });
+
+  if (error) {
+    throw new Error(
+      `No se pudo ${activa ? "activar" : "desactivar"} la sección: ${error.message}`
+    );
+  }
 }

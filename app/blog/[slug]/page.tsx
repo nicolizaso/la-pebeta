@@ -5,12 +5,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { Proximamente } from "@/components/Proximamente";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { NotaCard } from "@/components/blog/NotaCard";
 import { bloquesDelCuerpo, minutosDeLectura, resumenDe, slugDeEtiqueta } from "@/lib/blog";
 import { buscarNotaPublicada, listarNotas, type Nota } from "@/lib/db";
 import { fechaDelDia } from "@/lib/fechas";
 import { fotoDeNota } from "@/lib/photos";
+import { seccionActiva } from "@/lib/secciones";
 
 /**
  * Una nota del blog.
@@ -39,6 +41,10 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
+  if (!(await seccionActiva("blog"))) {
+    return { title: "Blog — Próximamente — La Pebeta", robots: { index: false, follow: true } };
+  }
+
   const { slug } = await params;
   const nota = await laNota(slug);
   if (!nota) return { title: "Nota — La Pebeta" };
@@ -50,6 +56,20 @@ export async function generateMetadata({
 }
 
 export default async function NotaPage({ params }: { params: Promise<{ slug: string }> }) {
+  // con el blog apagado ni siquiera una nota publicada se lee por su link:
+  // la sección entera está cerrada, no la nota
+  if (!(await seccionActiva("blog"))) {
+    return (
+      <Proximamente eyebrow="Blog" titulo="Estamos escribiendo la primera nota.">
+        <p>
+          El blog está por abrir. Acá vamos a contar lo que pasa en el campo: la huerta, los
+          animales, la cocina y lo que cada estación trae.
+        </p>
+        <p>Mientras tanto, escribinos: te contamos lo que quieras saber de la granja.</p>
+      </Proximamente>
+    );
+  }
+
   const { slug } = await params;
   const nota = await laNota(slug);
   if (!nota) notFound();
