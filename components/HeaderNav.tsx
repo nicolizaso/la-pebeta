@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Logo } from "./Logo";
 
 /**
  * La barra de arriba: el logo, los links que correspondan y el botón de
@@ -40,8 +41,8 @@ export function HeaderNav({ links }: { links: NavLink[] }) {
 
   return (
     <header className={`site${scrolled ? " scrolled" : ""}`}>
-      <Link href="/" className="logo" onClick={close}>
-        La Pebeta
+      <Link href="/" className="marca-link" onClick={close}>
+        <Logo dual />
       </Link>
       <nav className={`links${open ? " open" : ""}`}>
         {links.map((link) => (

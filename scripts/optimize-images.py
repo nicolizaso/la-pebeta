@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Turn the camera originals in assets/imgs/ into web-ready art for the site.
+"""Turn the camera originals into web-ready art for the site.
 
 The originals are 2–30 MB straight-out-of-camera JPEGs: fine as an archive,
 far too heavy to ship. This script writes resized, EXIF-rotated WebP masters
@@ -7,10 +7,16 @@ to public/imgs/ and a typed manifest (lib/photo-manifest.generated.ts) holding
 each file's dimensions plus a tiny inline blur placeholder, so <Image /> can
 render every photo without layout shift and with a blur-up transition.
 
-Usage:  python3 scripts/optimize-images.py         (needs Pillow)
+The archive no longer lives in the repo: 293 MB of originals that nothing
+serves is a heavy thing to clone. Keep it wherever it is kept —a drive, the
+cloud— and point the script at it. It expects the same folders as always
+(Restaurant, Granja, Huerta, Proveeduría, "Paseos y Animales", Eventos).
 
-Re-run it whenever assets/imgs/ changes, then commit public/imgs/ and the
-generated manifest.
+Usage:  python3 scripts/optimize-images.py <carpeta-de-originales>
+        PEBETA_ORIGINALES=<carpeta> python3 scripts/optimize-images.py
+
+Needs Pillow. Only what it finds gets rebuilt, so a single folder is enough to
+redo one area; commit public/imgs/ and the generated manifest afterwards.
 """
 
 import base64
@@ -18,12 +24,17 @@ import io
 import json
 import os
 import re
+import sys
 import unicodedata
 
 from PIL import Image, ImageOps
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "assets", "imgs")
+SRC = (
+    sys.argv[1]
+    if len(sys.argv) > 1
+    else os.environ.get("PEBETA_ORIGINALES", os.path.join(ROOT, "assets", "imgs"))
+)
 OUT = os.path.join(ROOT, "public", "imgs")
 MANIFEST = os.path.join(ROOT, "lib", "photo-manifest.generated.ts")
 
@@ -63,6 +74,15 @@ def blur_data_url(im: Image.Image) -> str:
 
 
 def main() -> None:
+    # Sin originales no hay nada que rehacer, y hay que cortar acá: seguir de
+    # largo reescribiría el manifiesto vacío y dejaría al sitio sin fotos.
+    if not os.path.isdir(SRC):
+        sys.exit(
+            f"No encuentro los originales en {SRC}.\n"
+            "Pasá la carpeta como argumento o en PEBETA_ORIGINALES; el archivo\n"
+            "ya no vive en el repo."
+        )
+
     entries: dict[str, dict] = {}
 
     for folder, area in FOLDERS.items():
@@ -99,6 +119,9 @@ def main() -> None:
             }
             print(f"{key:26} {im.width}x{im.height}  {os.path.getsize(out_path) // 1024} KB")
 
+    if not entries:
+        sys.exit(f"No hay fotos en {SRC}: dejo el manifiesto como está.")
+
     os.makedirs(os.path.dirname(MANIFEST), exist_ok=True)
     body = ",\n".join(
         f"  {json.dumps(key)}: {json.dumps(value, ensure_ascii=False)}"
@@ -107,7 +130,7 @@ def main() -> None:
     with open(MANIFEST, "w", encoding="utf-8") as fh:
         fh.write(
             "// GENERATED FILE — do not edit by hand.\n"
-            "// Run `python3 scripts/optimize-images.py` after changing assets/imgs/.\n\n"
+            "// Run `python3 scripts/optimize-images.py <carpeta-de-originales>`.\n\n"
             "export type PhotoAsset = {\n"
             "  src: string;\n"
             "  width: number;\n"

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "./Logo";
 import { WHATSAPP } from "@/lib/contacto";
 
 export function Footer() {
@@ -6,9 +7,9 @@ export function Footer() {
     <>
       <footer>
         <div className="wrap">
-          <a href="#" className="logo">
-            La Pebeta
-          </a>
+          <Link href="/" className="marca-link">
+            <Logo />
+          </Link>
           <div className="fcol">
             <a href="#">Instagram</a>
             <a href={WHATSAPP} target="_blank" rel="noreferrer">

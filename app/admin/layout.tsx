@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { AdminAviso } from "@/components/admin/AdminAviso";
 import { AdminLogin } from "@/components/admin/AdminLogin";
 import { AdminNav } from "@/components/admin/AdminNav";
@@ -28,7 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="admin">
       <aside className="admin-aside">
         <div className="admin-marca">
-          <span className="logo">La Pebeta</span>
+          <Logo />
           <span className="admin-marca-pie">Panel</span>
         </div>
 
