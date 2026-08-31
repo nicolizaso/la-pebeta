@@ -15,6 +15,12 @@ import { Footer } from "@/components/Footer";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { Lightbox } from "@/components/Lightbox";
 
+/**
+ * Se arma en cada visita: el menú pregunta qué secciones están activas, y
+ * prender la tienda o el blog desde el panel tiene que verse acá enseguida.
+ */
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   return (
     <>

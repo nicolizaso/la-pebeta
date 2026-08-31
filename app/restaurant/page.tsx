@@ -17,6 +17,12 @@ export const metadata: Metadata = {
     "Restaurant farm to table en Los Cardales: carta que cambia cada semana, de nariz a cola, con opciones veganas y sin TACC. Jueves a domingo, 12 a 16 hs.",
 };
 
+/**
+ * Se arma en cada visita: el menú pregunta qué secciones están activas, y
+ * prender la tienda o el blog desde el panel tiene que verse acá enseguida.
+ */
+export const dynamic = "force-dynamic";
+
 export default function RestaurantPage() {
   return (
     <>

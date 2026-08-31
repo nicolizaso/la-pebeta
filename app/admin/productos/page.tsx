@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AdminAviso, FaltaSecretKey } from "@/components/admin/AdminAviso";
+import { SeccionSwitch } from "@/components/admin/SeccionSwitch";
 import {
   listarCategoriasDelPanel,
   listarProductosDelPanel,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/db";
 import { buscarFoto } from "@/lib/photos";
 import { contarPorCategoria } from "@/lib/productos";
+import { SECCIONES, seccionesActivas } from "@/lib/secciones";
 import { hayClaveDeAdmin } from "@/lib/supabase";
 import { normalizar, precio } from "@/lib/tienda";
 import { cambiarPublicacion } from "../acciones";
@@ -61,6 +63,8 @@ export default async function ProductosPage({ searchParams }: { searchParams: Pr
   const estado = ESTADOS.some((e) => e.valor === params.estado) ? params.estado! : "";
   const q = (params.q ?? "").slice(0, 80);
 
+  const activas = await seccionesActivas();
+
   let productos: Producto[];
   let categorias: Categoria[];
   try {
@@ -106,6 +110,15 @@ export default async function ProductosPage({ searchParams }: { searchParams: Pr
           <Link href="/admin/productos/categorias">Categorías</Link>.
         </p>
       </header>
+
+      <SeccionSwitch
+        seccion="tienda"
+        interruptor={SECCIONES.tienda.interruptor}
+        activa={activas.tienda}
+        confirmacion={SECCIONES.tienda.confirmacion}
+        advertencia={SECCIONES.tienda.advertencia}
+        detalle="Con la tienda activada, Tienda vuelve al menú del sitio y se puede comprar. Apagada, el catálogo se sigue cargando acá pero /tienda muestra “Próximamente”."
+      />
 
       {guardado ? (
         <AdminAviso titulo={`Guardado: ${guardado.nombre}`}>

@@ -26,9 +26,10 @@ Abrí [http://localhost:3000](http://localhost:3000).
 - `lib/` — `photos.ts` y el manifiesto generado de imágenes, `db.ts` (los tipos
   y el acceso a la base), `supabase.ts` (la conexión), `subidas.ts` (las fotos
   que se suben desde el panel), `reservas.ts`, `horarios.ts`, `tienda.ts`,
-  `productos.ts` y `blog.ts` (las reglas de cada uno), `admin.ts` (la puerta del
-  panel), `fechas.ts`, `contacto.ts` y `smooth-scroll.ts` (el puente para mover
-  la página a través de Lenis).
+  `productos.ts` y `blog.ts` (las reglas de cada uno), `secciones.ts` (qué
+  secciones del sitio están abiertas), `admin.ts` (la puerta del panel),
+  `fechas.ts`, `contacto.ts` y `smooth-scroll.ts` (el puente para mover la
+  página a través de Lenis).
 - `assets/imgs/` — originales de cámara, ordenados por área. No se sirven: son el archivo del que sale `public/imgs/`.
 - `public/imgs/` — versiones web (WebP redimensionado) generadas por el script.
 - `supabase/migrations/` — el esquema de la base, en SQL y en orden.
@@ -36,7 +37,7 @@ Abrí [http://localhost:3000](http://localhost:3000).
 
 ## Datos
 
-Los datos viven en Postgres, en Supabase. Son seis tablas:
+Los datos viven en Postgres, en Supabase. Son siete tablas:
 
 | Tabla | Qué guarda |
 | --- | --- |
@@ -46,6 +47,7 @@ Los datos viven en Postgres, en Supabase. Son seis tablas:
 | `compras` | Las compras de la tienda, con sus ítems, el total y el `estado` (`pagada` / `entregada` / `cancelada`). |
 | `horarios` | Los horarios de atención: una fila por área (`proveeduria` / `restaurant`) y día de la semana. |
 | `notas` | Las notas del blog: título, `slug` (la URL), bajada, cuerpo, firma, `etiquetas`, foto, `publicada` y `fecha`, que es cuándo sale y la que lleva la nota. |
+| `secciones` | Una fila por sección que se puede apagar (`tienda`, `blog`) con su `activa`. Es lo que mira el menú antes de mostrar un link y cada página antes de mostrarse. |
 
 Hay además un bucket de Storage, `blog`, con las fotos que se suben desde el
 panel para una nota. Es público —lo que guarda se ve en el blog— y acepta hasta
@@ -70,8 +72,8 @@ En local van en `.env.local`; en Vercel, en las environment variables del
 proyecto. La publishable key es pública a propósito: lo que se puede hacer con
 ella lo decide RLS, y es dejar una reserva —que entra siempre como
 `pendiente`—, dejar una compra —que entra siempre como `pagada` y con al menos
-un ítem—, leer el catálogo publicado con sus categorías, leer los horarios y
-leer las notas del blog que ya salieron. Listar reservas y compras,
+un ítem—, leer el catálogo publicado con sus categorías, leer los horarios,
+leer las notas del blog que ya salieron y leer qué secciones están abiertas. Listar reservas y compras,
 confirmarlas, cancelarlas, marcarlas entregadas, cargar horarios, subir una
 foto y ver un borrador o una nota programada necesita la secret key, que sólo
 se usa del lado del server y sólo desde el panel.
@@ -163,6 +165,35 @@ muestra depende de la hora en que alguien entra. La `fecha` hace las dos cosas
 el `datetime-local` del formulario no manda zona, así que la resuelve
 `lib/fechas.ts` y no el reloj del server, que en Vercel está en UTC.
 
+## Tienda y blog: prendidas o apagadas
+
+La tienda y el blog se pueden apagar, y **salieron a producción apagados**: la
+casa los prende desde el panel cuando el catálogo y las primeras notas estén
+listos. Es una fila por sección en `secciones` y un interruptor arriba de
+Productos —"Activar tienda"— y de Blog —"Activar blog"—. Tocarlo no lo cambia:
+salta un recuadro que dice qué va a pasar y hay que confirmarlo, porque
+prender la tienda la pone a la venta para cualquiera que entre.
+
+Con una sección apagada:
+
+- su link no está en el menú, y la home tampoco ofrece "Ver la tienda";
+- su dirección (`/tienda`, `/blog`, `/blog/<slug>`) muestra una pantalla de
+  **Próximamente** —con el menú, el pie y WhatsApp— en vez de un 404: la página
+  existe, todavía no abrió, y se pide que no se indexe mientras tanto;
+- `POST /api/compras` no cierra ninguna compra y contesta 503. La puerta está
+  también en la API porque una URL no deja de existir porque la vista se haya
+  escondido.
+
+Lo que se carga en el panel se sigue cargando igual: apagar no esconde
+productos ni despublica notas, cierra la puerta de calle. Prender de vuelta
+trae todo como estaba.
+
+Si la base no contesta —o si todavía no corrió la migración que crea la
+tabla— las secciones cuentan como apagadas: cerrado de más es una página que
+dice "Próximamente"; abierto de más es una tienda a la venta sin que nadie la
+haya prendido. Por esta consulta las páginas que muestran el menú se arman en
+cada visita, así prender la tienda se ve enseguida y no en el próximo deploy.
+
 ## Panel
 
 `/admin` —se entra por el botón del pie del sitio— es la parte de adentro. Un
@@ -173,9 +204,9 @@ aside con las secciones y, al lado, la que esté abierta:
 | Resumen | Lo que hay tomado de hoy en adelante —pendientes, reservas del día, personas anotadas— más lo vendido en la tienda en los últimos 30 días y los pedidos que faltan entregar. |
 | Reservas | Paseos y mesas en la misma tabla, con filtros por qué, cuándo y estado, y los botones para confirmar, cancelar o reabrir. |
 | Compras | Los pedidos de la tienda, lo último primero, con el detalle de cada uno y su total. Entran `pagada`: se marcan entregadas cuando la persona pasó a retirar, o canceladas si no pasó. |
-| Productos | El catálogo entero, publicado o no, con filtros por categoría, estado y buscador. Se carga, se edita, se publica, se esconde y se borra. |
+| Productos | El catálogo entero, publicado o no, con filtros por categoría, estado y buscador. Se carga, se edita, se publica, se esconde y se borra. Arriba está el interruptor que abre o cierra la tienda en el sitio. |
 | Categorías | Los cajones de la tienda: nombre, bajada, orden y si están a la vista. Se puede crear una sin pasar por acá, desde el select del formulario de un producto. |
-| Blog | Las notas: se escriben, se guardan de borrador, se publican, se sacan y se borran, con filtros por estado y buscador. Llevan etiquetas —la primera es su sección—, la dirección sale del título y la foto se sube o se elige de la galería. Una nota con fecha de más adelante queda programada y sale sola ese día. |
+| Blog | Las notas: se escriben, se guardan de borrador, se publican, se sacan y se borran, con filtros por estado y buscador. Arriba está el interruptor que abre o cierra el blog en el sitio. Llevan etiquetas —la primera es su sección—, la dirección sale del título y la foto se sube o se elige de la galería. Una nota con fecha de más adelante queda programada y sale sola ese día. |
 | Horarios | La semana de la proveeduría y la del restaurant, siete renglones cada una, con su nota por día. |
 
 Cargar un producto en una categoría que todavía no existe no obliga a ir a

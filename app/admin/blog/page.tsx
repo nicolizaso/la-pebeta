@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AdminAviso, FaltaSecretKey } from "@/components/admin/AdminAviso";
+import { SeccionSwitch } from "@/components/admin/SeccionSwitch";
 import { estadoDeNota, resumenDe, type EstadoNota } from "@/lib/blog";
 import { listarNotasDelPanel, type Nota } from "@/lib/db";
 import { fechaHora } from "@/lib/fechas";
 import { fotoDeNota } from "@/lib/photos";
+import { SECCIONES, seccionesActivas } from "@/lib/secciones";
 import { hayClaveDeAdmin } from "@/lib/supabase";
 import { normalizar } from "@/lib/tienda";
 import { cambiarPublicacionNota } from "../acciones";
@@ -60,6 +62,8 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   const estado = ESTADOS.some((e) => e.valor === params.estado) ? params.estado! : "";
   const q = (params.q ?? "").slice(0, 80);
 
+  const activas = await seccionesActivas();
+
   let notas: Nota[];
   try {
     notas = await listarNotasDelPanel();
@@ -104,6 +108,15 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
           sin que nadie tenga que volver acá.
         </p>
       </header>
+
+      <SeccionSwitch
+        seccion="blog"
+        interruptor={SECCIONES.blog.interruptor}
+        activa={activas.blog}
+        confirmacion={SECCIONES.blog.confirmacion}
+        advertencia={SECCIONES.blog.advertencia}
+        detalle="Con el blog activado, Blog vuelve al menú del sitio y las notas publicadas quedan a la vista. Apagado, las notas se siguen escribiendo acá pero /blog muestra “Próximamente”."
+      />
 
       {guardada && estadoGuardada ? (
         <AdminAviso titulo={`Guardada: ${guardada.titulo}`}>

@@ -2401,6 +2401,73 @@ body:has(.nota-portada) header.site:not(.scrolled) .nav-toggle span {
   font-size: clamp(28px, 3.4vw, 44px);
 }
 
+/* ---------- próximamente: una sección que todavía no abrió ----------
+   Fondo oscuro, como reservas: la barra de arriba nace clara y así se lee
+   sobre esta pantalla igual que sobre una foto de portada. */
+.proximamente {
+  background: var(--moss-deep);
+  color: var(--paper-light);
+  /* una pantalla: no hay nada más abajo que mirar */
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: clamp(118px, 14vw, 170px) 0 clamp(56px, 7vw, 90px);
+}
+.proximamente > .wrap {
+  width: 100%;
+}
+.proximamente .eyebrow {
+  color: var(--wheat);
+}
+.proximamente .eyebrow::before {
+  background: var(--wheat);
+}
+.proximamente h1 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: clamp(38px, 5.8vw, 78px);
+  line-height: 1.02;
+  letter-spacing: -0.005em;
+  margin: 0 0 22px;
+  max-width: 16ch;
+}
+.proximamente-cuerpo {
+  max-width: 54ch;
+  margin-bottom: 34px;
+}
+.proximamente-cuerpo p {
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.66;
+  color: rgba(250, 247, 239, 0.8);
+}
+.proximamente-cuerpo p:last-child {
+  margin-bottom: 0;
+}
+.proximamente-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+/* los botones se dan vuelta: acá el papel es el que resalta */
+.proximamente .btn.primary {
+  background: var(--paper-light);
+  color: var(--ink);
+  border-color: var(--paper-light);
+}
+.proximamente .btn.primary:hover {
+  background: transparent;
+  color: var(--paper-light);
+}
+.proximamente .btn.ghost {
+  border-color: rgba(250, 247, 239, 0.5);
+  color: var(--paper-light);
+}
+.proximamente .btn.ghost:hover {
+  background: var(--paper-light);
+  color: var(--ink);
+}
+
 /* ---------- footer ---------- */
 footer {
   padding: 56px 0 40px;
@@ -3777,6 +3844,117 @@ footer .fine {
   color: var(--clay);
 }
 
+/* ---------- el interruptor de una sección ---------- */
+.admin-seccion {
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  border-left: 3px solid rgba(35, 40, 31, 0.28);
+  padding: 18px 22px;
+  margin-bottom: 26px;
+}
+.admin-seccion.activa {
+  border-left-color: var(--moss);
+}
+.admin-seccion-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.admin-seccion-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.admin-seccion-switch input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--moss);
+  cursor: pointer;
+}
+.admin-seccion-switch input:disabled {
+  cursor: progress;
+}
+.admin-seccion-estado {
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(35, 40, 31, 0.5);
+  border: 1px solid var(--line);
+  padding: 4px 9px;
+}
+.admin-seccion.activa .admin-seccion-estado {
+  color: var(--moss);
+  border-color: rgba(73, 87, 60, 0.45);
+}
+.admin-seccion-detalle {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(35, 40, 31, 0.65);
+  max-width: 74ch;
+}
+.admin-seccion-msg {
+  margin: 10px 0 0;
+  font-family: var(--ff-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+.admin-seccion-msg.error {
+  color: var(--clay);
+}
+
+/* el recuadro que pregunta antes de prender o apagar una sección */
+.admin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.admin-modal-fondo {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: rgba(35, 40, 31, 0.55);
+  cursor: pointer;
+}
+.admin-modal-caja {
+  position: relative;
+  width: min(100%, 52ch);
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  padding: clamp(22px, 3vw, 30px);
+  box-shadow: 0 24px 60px rgba(35, 40, 31, 0.25);
+}
+.admin-modal-caja h3 {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: 26px;
+  margin: 0 0 10px;
+}
+.admin-modal-caja p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(35, 40, 31, 0.75);
+}
+.admin-modal-pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
 /* ---------- avisos del panel ---------- */
 .admin-aviso {
   background: var(--paper-light);
@@ -3943,5 +4121,12 @@ footer .fine {
   }
   .admin-buscador {
     flex: 1 1 220px;
+  }
+  .admin-modal-pie {
+    justify-content: stretch;
+  }
+  .admin-modal-pie .admin-btn {
+    flex: 1 1 140px;
+    text-align: center;
   }
 }

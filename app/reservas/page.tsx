@@ -13,6 +13,12 @@ export const metadata: Metadata = {
     "Reservá un paseo por el campo o una mesa en el restaurant de La Pebeta, en Los Cardales. Jueves a domingo.",
 };
 
+/**
+ * Se arma en cada visita: el menú pregunta qué secciones están activas, y
+ * prender la tienda o el blog desde el panel tiene que verse acá enseguida.
+ */
+export const dynamic = "force-dynamic";
+
 /** `/reservas?tipo=paseos` llega preseleccionado desde los CTA del sitio. */
 export default async function ReservasPage({
   searchParams,

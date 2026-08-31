@@ -2,17 +2,31 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { Proximamente } from "@/components/Proximamente";
 import { SiteAnimations } from "@/components/SiteAnimations";
 import { NotaCard } from "@/components/blog/NotaCard";
 import { etiquetasDe, slugDeEtiqueta } from "@/lib/blog";
 import { WHATSAPP } from "@/lib/contacto";
 import { listarNotas, type Nota } from "@/lib/db";
+import { seccionActiva } from "@/lib/secciones";
 
-export const metadata: Metadata = {
-  title: "Blog — La Pebeta",
-  description:
-    "Lo que pasa en La Pebeta contado por quienes lo hacen: la huerta, los animales, la cocina y las estaciones en Los Cardales.",
-};
+/** Con el blog apagado no hay notas que ofrecer, así que tampoco se indexa. */
+export async function generateMetadata(): Promise<Metadata> {
+  if (!(await seccionActiva("blog"))) {
+    return {
+      title: "Blog — Próximamente — La Pebeta",
+      description:
+        "El blog de La Pebeta está por abrir: la huerta, los animales, la cocina y las estaciones en Los Cardales, contados por quienes lo hacen.",
+      robots: { index: false, follow: true },
+    };
+  }
+
+  return {
+    title: "Blog — La Pebeta",
+    description:
+      "Lo que pasa en La Pebeta contado por quienes lo hacen: la huerta, los animales, la cocina y las estaciones en Los Cardales.",
+  };
+}
 
 /**
  * El blog.
@@ -31,6 +45,21 @@ export default async function BlogPage({
 }: {
   searchParams: Promise<{ etiqueta?: string }>;
 }) {
+  if (!(await seccionActiva("blog"))) {
+    return (
+      <Proximamente eyebrow="Blog" titulo="Estamos escribiendo la primera nota.">
+        <p>
+          Acá vamos a contar lo que pasa en el campo: la huerta, los animales, la cocina y lo que
+          cada estación trae, más recetas para hacer en casa con lo que se cosecha.
+        </p>
+        <p>
+          Todavía no salió ninguna. Mientras tanto seguinos por WhatsApp: por ahí avisamos qué hay
+          en la proveeduría y qué se está cocinando.
+        </p>
+      </Proximamente>
+    );
+  }
+
   let notas: Nota[] = [];
   let fallo = false;
 

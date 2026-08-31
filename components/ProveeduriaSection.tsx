@@ -1,7 +1,14 @@
 import { Photo } from "./Photo";
 import { LinkArrow } from "./LinkArrow";
+import { seccionActiva } from "@/lib/secciones";
 
-export function ProveeduriaSection() {
+/**
+ * La proveeduría en la home. El link a la tienda entra sólo si la tienda está
+ * abierta: mientras está apagada no se manda a nadie a un "Próximamente".
+ */
+export async function ProveeduriaSection() {
+  const tienda = await seccionActiva("tienda");
+
   return (
     <section className="feature" id="proveeduria">
       <div className="wrap">
@@ -45,7 +52,7 @@ export function ProveeduriaSection() {
             productos de nuestros propios animales. Todo lo que no se usa en el restaurant, sale
             por acá.
           </p>
-          <LinkArrow href="/tienda">Ver la tienda</LinkArrow>
+          {tienda ? <LinkArrow href="/tienda">Ver la tienda</LinkArrow> : null}
         </div>
       </div>
     </section>
