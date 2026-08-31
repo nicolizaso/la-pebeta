@@ -291,6 +291,20 @@ nav.links a.cta {
 .nav-toggle {
   display: none;
 }
+/* Con las páginas de sección adentro, el renglón del menú quedó largo: se
+   aprieta un poco antes de que lo tome el menú de hamburguesa. */
+@media (min-width: 861px) and (max-width: 1180px) {
+  nav.links {
+    gap: 14px;
+  }
+  nav.links a {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+  nav.links a.cta {
+    padding: 7px 12px;
+  }
+}
 
 /* ---------- hero ---------- */
 .hero {

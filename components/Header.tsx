@@ -6,6 +6,9 @@ import Link from "next/link";
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/restaurant", label: "Restaurant" },
+  { href: "/granja", label: "Granja" },
+  { href: "/huerta", label: "Huerta" },
+  { href: "/paseos", label: "Paseos" },
   { href: "/tienda", label: "Tienda" },
   { href: "/blog", label: "Blog" },
 ];
